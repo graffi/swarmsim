@@ -3,7 +3,8 @@ import copy
 from core import world, agent as agent_class
 import random
 # from solution.p_max_lifetime.swarm_sim_header import *
-from usecase.coating.solution.p_max_lifetime.swarm_sim_header import *
+# from usecase.coating.solution.p_max_lifetime.swarm_sim_header import *
+from core.swarm_sim_header import *
 # import solution.p_max_lifetime.distance_calculation as distance_calc_mod
 import usecase.coating.solution.p_max_lifetime.distance_calculation as distance_calc_mod
 # import solution.p_max_lifetime.read_write as read_write_mod
