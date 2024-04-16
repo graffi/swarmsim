@@ -1,3 +1,5 @@
+# Maybe double file with core.swarm_sim_header.py
+
 
 import sys
 import random
@@ -100,8 +102,9 @@ def move_to_dest_step_by_step(agent, destiny, prev_dir=None):
     """
     if prev_dir is None:
         prev_dir = []
-    next_dir = get_next_direction_to(agent.coordinates[0], agent.coordinates[1],
-                                     destiny[0], destiny[1])
+    print("get_next_direction_to(agent.coordinates[0] = ",agent.coordinates[0]," agent.coordinates[1] = ", agent.coordinates[1], "destiny[0] = ", destiny[0], " destiny[1]) = ", destiny[1] )
+    next_dir = get_next_direction_to(agent.coordinates[0], agent.coordinates[1], destiny[0], destiny[1])
+    print ("nextdir = ", next_dir )
     if next_dir in prev_dir:
         return None
     if agent.item_in(next_dir) or agent.agent_in(next_dir):

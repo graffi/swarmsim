@@ -1,7 +1,7 @@
 import math
 import numpy as np
-from lib.swarm_sim_header import *
-from lib import world, agent as agent_class
+from core.swarm_sim_header import *
+from core import world, agent as agent_class
 
 
 def end_sim(sim: world) -> None:

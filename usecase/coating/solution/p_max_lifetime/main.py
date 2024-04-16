@@ -13,6 +13,8 @@ import usecase.coating.solution.p_max_lifetime.p_max_calculation as p_max_calc_m
 #  import solution.p_max_lifetime.coating_alg as coating_alg
 import usecase.coating.solution.p_max_lifetime.coating_alg as coating_mod
 # import solution.goal_test as goal_test
+import usecase.coating.solution.p_max_lifetime.coating_alg as coating_alg
+import usecase.coating.solution.goal_test as goal_test
 
 cycle_no = 3
 
@@ -34,7 +36,7 @@ def solution(world):
         # coating_mod.initialize_agents(world)
         print("My list of ", len(world.agents)," agents: ", world.agents)
 
-        coating_mod.initialize_agents(world.agents)
+        coating_mod.initialize_agents(world)
 
     for agent in world.agents:
         # resets all agents last movement direction every 10 cycles
@@ -71,6 +73,7 @@ def initialize_agents(world):
         if random.random() < world.config_data.agent_fail_quote:
             agent.willfail = True
         agent.dest_t = random.choice(world.get_items_list()).coordinates
+        print("dfsdfjhakjahskf")
 
 
 # def write_cycle(agent: agent_class) -> None:

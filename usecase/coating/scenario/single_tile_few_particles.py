@@ -1,8 +1,8 @@
 from lib.swarm_sim_header import *
 
 
-def scenario(sim, particle_count):
-    if particle_count == -1:
-        particle_count = 20
-    sim.add_tile((0.0, 0.0))
-    generating_random_spraded_particles(sim, particle_count)
+def scenario(sim, agent_count):
+    if agent_count == -1:
+        agent_count = 20
+    sim.add_item((0.0, 0.0))
+    generating_random_spraded_agents(sim, agent_count)

@@ -1,40 +1,47 @@
 from core.swarm_sim_header import *
 from core import agent as agent_class
 import math
+import random
 from  usecase.coating.solution import solution_header
 
 
 # def initialize_agents(agent: agent_class) -> None:
-def initialize_agents(agent: agent_class):
+# def initialize_agents(agent: agent_class) -> None:
+def initialize_agents(world) -> None:
     """
     Adds all instance attributes to the agent and initializes them
     @param agent: the agent to initialize
     """
+    agents = world.get_agent_list()
 
-    print("Initializing my ", len(agent), " agents...")
-    setattr(agent, 'own_dist', math.inf)
-    # nh: neighborhood
-    setattr(agent, "nh_list", [solution_header.Neighbor("fl", math.inf)] * 6)
-    setattr(agent, "rcv_buf", {})
-    setattr(agent, "rcv_buf_dbg", {})
-    setattr(agent, "snd_buf", {})
-    # setattr(agent, "prev_direction", False)
-    setattr(agent, "next_direction", False)
-    setattr(agent, "prev_direction", [])
+    print("Initializing my ", len(agents), " agents...")
+    for agent in agents:
+        if not hasattr(agent, 'own_dist'):
+            setattr(agent, 'own_dist', math.inf)
 
-    # t: item
-    setattr(agent, "dest_t", None)
+        # nh: neighborhood
+        setattr(agent, "nh_list", [solution_header.Neighbor("fl", math.inf)] * 6)
+        setattr(agent, "rcv_buf", {})
+        setattr(agent, "rcv_buf_dbg", {})
+        setattr(agent, "snd_buf", {})
+        # setattr(agent, "prev_direction", False)
+        setattr(agent, "next_direction", False)
+        setattr(agent, "prev_direction", [])
 
-    # fl: free location
-    # setattr(agent, "fl_min", PMaxInfo())
+        # t: item
+        # setattr(agent, "dest_t", None)
+        setattr(agent, 'dest_t', random.choice(world.get_items_list()).coordinates)
 
-    # p: agent
-    setattr(agent, "p_max", solution_header.PMaxInfo())
-    setattr(agent, "own_p_max_lifetime", 0)
-    setattr(agent, "wait", False)
-    setattr(agent, "waiting_rounds", 0)
-    setattr(agent, "max_prev_dirs", 1)
-    setattr(agent, "willfail", False)
+        # fl: free location
+        # setattr(agent, "fl_min", PMaxInfo())
+
+        # p: agent
+        setattr(agent, "p_max", solution_header.PMaxInfo())
+        setattr(agent, "own_p_max_lifetime", 0)
+        setattr(agent, "wait", False)
+        setattr(agent, "waiting_rounds", 0)
+        setattr(agent, "max_prev_dirs", 1)
+        setattr(agent, "willfail", False)
 
 
 # def reset_attributes(agent: agent_class) -> None:

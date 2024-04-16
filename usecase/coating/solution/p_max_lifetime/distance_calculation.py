@@ -2,6 +2,7 @@ from core.swarm_sim_header import *
 from core import agent as agent_class, matter as matter_class
 import math
 from usecase.coating.solution import solution_header
+# from core import solution_header
 
 
 def calculate_distances(agent: agent_class) -> solution_header.NH_LIST_TYPE:
