@@ -232,8 +232,8 @@ def walkHorizontal(agent):
 
     nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
-    # CASE Begin: Falling in case we are not connected to E,W,SE,SW
-    if freeW and freeSW and freeE and freeSE:
+    # CASE Begin: FALLING Start  - freeSW and freeSE -   Check whether Agent needs to fall
+    if freeSW and freeSE:
         yposition = agent.coordinates[1]
 
         # We know already that this agent must fall, it will be in a zig (SE) - zag (SW) pattern, depending on the height (y - coordinate)
@@ -304,16 +304,11 @@ def walkHorizontal(agent):
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
-    if (nextdirection == dirNotSetYet and agentinSE and freeSW and not agentinNE):
-         nextdirection = dirSW
-
-    if (nextdirection == dirNotSetYet and agentinSW and freeSE and not agentinNW):
-        nextdirection = dirSE
-
     if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW:
         nextdirection = dirE
 
     if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
+        yposition = agent.coordinates[1]
         nextdirection = dirW
     # CASE END: TOWER SHIFT LEFT AND RIGHT
 
