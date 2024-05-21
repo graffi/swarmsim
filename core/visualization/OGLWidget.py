@@ -115,7 +115,7 @@ class OGLWidget(QtOpenGL.QGLWidget):
 
         if self.item_update_flag:
             self.item_update_flag = False
-            tmp = np.array(list(self.item_offset_data.values())).transpose()
+            tmp = np.array(list(self.item_offset_data.values()), dtype=object).transpose()
             if len(tmp) == 0:
                 self.programs["item"].update_offsets([])
                 self.programs["item"].update_colors([])
