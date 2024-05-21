@@ -8,6 +8,7 @@ def solution(world):
     maxAgentHeight = 0
     maxDistance = 0
     stopiftowerbuilt = False
+    debugon = False
 
     global agents_and_distances, alpha, beta, nextdirection
     global dirE, dirW, dirNE, dirSE, dirSW, dirNW, dirStand, dirNotSetYet
@@ -48,11 +49,12 @@ def solution(world):
         for agent in agents_and_distances:
             if (agents_and_distances[agent] > maxDistance):
                 maxDistance = agents_and_distances[agent]
-        print("MaxDist = ", maxDistance)
+        # print("MaxDist = ", maxDistance)
 
-        for agent, distance in agents_and_distances.items():
-            print("Round:", world.get_actual_round(), " Agent:", agent, "Distance:", distance, " MaxDist = ", maxDistance, " Ratio = ", distance/maxDistance)
-        # Iterate over each agent: If there is an item in the neighborhood, set the distance of the agent to 1.
+        if debugon == True:
+            for agent, distance in agents_and_distances.items():
+                print("Round:", world.get_actual_round(), " Agent:", agent, "Distance:", distance, " MaxDist = ", maxDistance, " Ratio = ", distance/maxDistance)
+            # Iterate over each agent: If there is an item in the neighborhood, set the distance of the agent to 1.
 
 
         # From here we focus on the movement of each agent
@@ -68,7 +70,7 @@ def solution(world):
                 walkRegular(agent)
             else:
                 myRatio = agents_and_distances[agent] / maxDistance
-                if myRatio < alpha:
+                if myRatio < alpha :
                     agent.set_color(color2)
                     walkRegular(agent)
                 elif myRatio >= alpha and myRatio < beta:
@@ -76,7 +78,8 @@ def solution(world):
                     walkHorizontal(agent)
                 elif myRatio >= beta:
                     agent.set_color(color4)
-                    walkbridgeend(agent)
+                    walkBridgeend(agent)
+                    # walkRegular(agent)
 
         # For next step: define the goal of the simulation, e.g. to build a tower of n agents and then terminate the simulation
 
@@ -88,7 +91,8 @@ def solution(world):
             minAgentHeight = agent.coordinates[1]
 
         towerheight = maxAgentHeight - minAgentHeight + 1
-        print("Round: ", world.get_actual_round(), "MaxHeight: ", maxAgentHeight, "Minheight: ", minAgentHeight,
+        if debugon:
+            print("Round: ", world.get_actual_round(), "MaxHeight: ", maxAgentHeight, "Minheight: ", minAgentHeight,
               "Towerheight: ", towerheight, "  Agent No.", agent.number, "  Coordinates", agent.coordinates,
               " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
@@ -124,7 +128,6 @@ def checkSurrounding(agent):
     freeNE = not agent.agent_in(dirNE) and not agent.item_in(dirNE)
     freeSW = not agent.agent_in(dirSW) and not agent.item_in(dirSW)
     freeSE = not agent.agent_in(dirSE) and not agent.item_in(dirSE)
-
 
 
 def walkRegular(agent):
@@ -312,6 +315,17 @@ def walkHorizontal(agent):
         nextdirection = dirW
     # CASE END: TOWER SHIFT LEFT AND RIGHT
 
+
+    # This will move all to the EAST
+    if agents_and_distances[agent] == maxDistance and agentinSE and freeE:
+        nextdirection = dirE
+    if agentinW and freeSW and freeSE:
+        nextdirection = dirStand
+    elif agentinSW and not agentinE and freeSE and freeNW and freeNE and agents_and_distances[agent] == maxDistance:
+        nextdirection = dirSE
+
+
+
     # CASE DEFAULT: If no direction selected, do not move
     if nextdirection == dirNotSetYet:
         nextdirection = dirStand
@@ -320,7 +334,8 @@ def walkHorizontal(agent):
     if nextdirection != dirNotSetYet:
         agent.move_to(nextdirection)
 
-def walkbridgeend(agent):
+
+def walkBridgeend(agent):
     global iteminE, iteminW, iteminNE, iteminNW, iteminSE, iteminSW
     global agentinE, agentinW, agentinNE, agentinNW, agentinSE, agentinSW
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
@@ -328,20 +343,14 @@ def walkbridgeend(agent):
 
     nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
-    # CASE Begin: FALLING Start  - freeSW and freeSE -   Check whether Agent needs to fall
-    if freeSW and freeSE:
-        yposition = agent.coordinates[1]
+    strategy = "non"
 
-        # We know already that this agent must fall, it will be in a zig (SE) - zag (SW) pattern, depending on the height (y - coordinate)
-        if (yposition % 2) == 0:
-            nextdirection = dirSW
-        else:
-            nextdirection = dirSE
-    # CASE End: FALLING End  - freeSW and freeSE -   Check whether Agent needs to fall
+
 
     # CASE Begin: Agent is alone on the floor - Walk Left - Right -  iteminSE and iteminSW  - and nothing is above it
     # Walk to left of right if possible, otherwise stand
-    if not agentinW and not agentinE:
+    if True:
+        # not agentinW and not agentinE:
 
         if nextdirection == dirNotSetYet and iteminSE and iteminSW:
             # Move left or right
@@ -374,39 +383,124 @@ def walkbridgeend(agent):
         if nextdirection == dirNotSetYet and freeSW and iteminSE and not agentinNW and freeE:
             # Move left
             nextdirection = dirE
+    if nextdirection != dirNotSetYet:
+        strategy = "onfloor"
     # CASE End: Agent is on the floor - Walk Left -Right - iteminSE and iteminSW  - and nothing is above it
+
+
+
+    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
+    # climb on agent in W if possible AND no other agent is on top of you
+    # if nextdirection == dirNotSetYet and (agentinW and freeNW) and agentinSW  and not agentinE and ((not agentinNE) or (agentinNE and agentinE)):
+    #     nextdirection = dirNW
+    #     strategy = "climbing"
+
+    # climb on agent in E if possible AND no other agent is on top of you
+    if nextdirection == dirNotSetYet and (agentinE and freeNE) and agentinSE and not agentinW and ((not agentinNW) or (agentinNW and agentinW)):
+        nextdirection = dirNE
+        strategy = "climbing"
+    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
+
+
 
     # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
     if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeE and agentinNE and not agentinNW:
         nextdirection = dirE  # freeE is True
-    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
+        strategy = "onagents"
+    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
     # Why not also case for W?
     if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE:
         nextdirection = dirW
+        strategy = "onagents"
     # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
 
     if nextdirection == dirNotSetYet and freeNE and freeE and agentinSE and not agentinNW:
         nextdirection = dirE  # freeE is True
+        strategy = "onagents"
 
-    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
-    # climb on agent in W if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinW and freeNW) and ((not agentinNE) or (agentinNE and agentinE)):
-        nextdirection = dirNW
+    if nextdirection == dirNotSetYet and freeNW and freeW and agentinSW and not agentinNE:
+        nextdirection = dirW  # freeW is True
+        strategy = "onagents"
 
-    # climb on agent in E if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinE and freeNE) and ((not agentinNW) or (agentinNW and agentinW)):
-        nextdirection = dirNE
-    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
+
+
+
+
+
+
+
+
+    #     if agentinSW and freeW and freeE and freeNW and freeNE and freeSE:
+    #             nextdirection = dirStand
+
+
+    # CASE New Movement move horizontal
+    # if agentinSW and freeSE and freeW and freeNW and freeNE and freeE:
+    #     nextdirection = dirSE
+    #
+    # if agentinSE and freeSW and freeW and freeNW and freeNE and freeE:
+    #     nextdirection = dirSW
+    #
+    # # CASE New Movement move horizontal in spot
+    # if agentinSW and agentinE and freeSE and freeW and freeNW and freeNE:
+    #     nextdirection = dirSE
+    #
+    # if agentinSE and agentinW and freeSW and freeW and freeNW and freeNE:
+    #     nextdirection = dirSW
+
+
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
     if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW:
         nextdirection = dirE
-
-    if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
-        yposition = agent.coordinates[1]
-        nextdirection = dirW
+    #
+    # if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
+    #     yposition = agent.coordinates[1]
+    #     nextdirection = dirW
     # CASE END: TOWER SHIFT LEFT AND RIGHT
+
+
+
+
+    # This will move all to the EAST
+    if agents_and_distances[agent] == maxDistance and agentinSE and freeE:
+        nextdirection = dirE
+    if agentinW and freeSW and freeSE:
+        nextdirection = dirStand
+    elif agentinSW and not agentinE and freeSE and freeNW and freeNE and agents_and_distances[agent] == maxDistance:
+        nextdirection = dirSE
+
+    # if agents_and_distances[agent] == maxDistance:
+        #     # We are at the top of the tower
+    # if agentinE and agentinSW and freeSE:
+    #     nextdirection = dirStand
+    # #         # if agentinE and freeNE and strategy == "climbing":
+    # #         #     nextdirection = dirNE
+    # if agentinE and agentinSW and agentinNW:
+    #     nextdirection = dirStand
+    # if agentinSE and freeE:
+    #     nextdirection = dirE
+    # if agentinSW and freeSE:
+    #     nextdirection = dirSE
+
+
+
+
+
+    # CASE Begin: FALLING Start  - freeSW and freeSE -   Check whether Agent needs to fall
+    if freeSW and freeSE and not agentinE and not agentinW:
+        yposition = agent.coordinates[1]
+        print("Walk bridge end: This agent ", agent, " is at X ", agent.coordinates[0], ", Y ", agent.coordinates[1]," : should fall")
+
+        # We know already that this agent must fall, it will be in a zig (SE) - zag (SW) pattern, depending on the height (y - coordinate)
+        if (yposition % 2) == 0:
+            nextdirection = dirSW
+        else:
+            nextdirection = dirSE
+    # CASE End: FALLING End  - freeSW and freeSE -   Check whether Agent needs to fall
+
+
 
     # CASE DEFAULT: If no direction selected, do not move
     if nextdirection == dirNotSetYet:
@@ -420,7 +514,9 @@ def walkbridgeend(agent):
 def calculateDistances(world):
     mydistances = {}
     maxDistance = 0
-    print("calculate dist world.get_agent_list() . length:", len(world.get_agent_list()))
+    debugon = False
+    if debugon:
+        print("calculate dist world.get_agent_list() . length:", len(world.get_agent_list()))
 
     for agent in world.get_agent_list():
 
