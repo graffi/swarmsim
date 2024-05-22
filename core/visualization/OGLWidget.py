@@ -101,7 +101,7 @@ class OGLWidget(QtOpenGL.QGLWidget):
         """
         if self.agent_update_flag:
             self.agent_update_flag = False
-            tmp = np.array(list(self.agent_offset_data.values())).transpose()
+            tmp = np.array(list(self.item_offset_data.values()), dtype=object).transpose()
             if len(tmp) == 0:
                 self.programs["agent"].update_offsets([])
                 self.programs["agent"].update_colors([])
