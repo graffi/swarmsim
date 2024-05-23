@@ -140,7 +140,14 @@ def walkRegular(agent):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     checkSurrounding(agent)
 
-
+    myDistanceplusone = 1
+    myRatioplusone = 0
+    try:
+        myDistanceplusone = agents_and_distances[agent]
+        myDistanceplusone = myDistanceplusone + 1
+        myRatioplusone = myDistanceplusone / maxDistance
+    except:
+        print("Agent ", agent, " has no distance")
 
     nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
@@ -197,7 +204,7 @@ def walkRegular(agent):
         nextdirection = dirE  # freeE is True
     # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
     # Why not also case for W?
-    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE:
+    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE and not agentinE:
         nextdirection = dirW
     # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
 
@@ -300,7 +307,9 @@ def walkHorizontal(agent):
     #     nextdirection = dirNW
     #
     # climb on agent in E if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinE and freeNE) and agentinSE and not agentinW and ((not agentinNW) or (agentinNW and agentinW)):
+    if nextdirection == dirNotSetYet and (agentinE and freeNE)  and not agentinW and ((not agentinNW) or (agentinNW and agentinW)) and agentinSE:
+        nextdirection = dirNE
+    if nextdirection == dirNotSetYet and (agentinE and freeNE)  and not agentinW and ((not agentinNW) or (agentinNW and agentinW)) and myRatiominusone > alpha:
         nextdirection = dirNE
     # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
 
@@ -314,8 +323,7 @@ def walkHorizontal(agent):
     if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW and myRatioplusone < beta:
         nextdirection = dirStand
 
-        print("Walk Horizontal: This Going East 1:", agent, agents_and_distances[agent], maxDistance, agents_and_distances[agent]/ maxDistance, myRatioplusone,
-              beta)
+        # print("Walk Horizontal: This Going East 1:", agent, agents_and_distances[agent], maxDistance, agents_and_distances[agent]/ maxDistance, myRatioplusone, beta)
 
     # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
     if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeE and agentinNE and not agentinNW:
