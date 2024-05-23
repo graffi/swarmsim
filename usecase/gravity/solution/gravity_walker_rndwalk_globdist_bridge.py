@@ -18,8 +18,9 @@ def solution(world):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     global color1, color2, color3, color4
 
-    alpha = 0.25
-    beta = 0.75
+    paramStartFromTowerHeight = 0.7
+    alpha = 0.2
+    beta = 0.6
 
     color1 = (0.0, 0.2, 0.2, 1.0)
     color2 = (0.0, 0.6, 0.0, 1.0)
@@ -51,6 +52,7 @@ def solution(world):
                 maxDistance = agents_and_distances[agent]
         # print("MaxDist = ", maxDistance)
 
+
         if debugon == True:
             for agent, distance in agents_and_distances.items():
                 print("Round:", world.get_actual_round(), " Agent:", agent, "Distance:", distance, " MaxDist = ", maxDistance, " Ratio = ", distance/maxDistance)
@@ -63,20 +65,23 @@ def solution(world):
             # print(world.get_actual_round(), " Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
             checkSurrounding(agent)
-
+            agentCount = len(world.get_agent_list())
 
             if maxDistance == 0 or agent not in agents_and_distances:
                 agent.set_color(color1)
                 walkRegular(agent)
             else:
                 myRatio = agents_and_distances[agent] / maxDistance
-                if myRatio < alpha :
+                if maxDistance < paramStartFromTowerHeight * agentCount:
+                    agent.set_color(color1)
+                    walkRegular(agent)
+                elif myRatio < alpha :
                     agent.set_color(color2)
                     walkRegular(agent)
-                elif myRatio >= alpha and myRatio < beta:
+                elif myRatio >= alpha and myRatio < beta :
                     agent.set_color(color3)
                     walkHorizontal(agent)
-                elif myRatio >= beta:
+                elif myRatio >= beta :
                     agent.set_color(color4)
                     walkBridgeend(agent)
 
@@ -134,6 +139,8 @@ def walkRegular(agent):
     global agentinE, agentinW, agentinNE, agentinNW, agentinSE, agentinSW
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     checkSurrounding(agent)
+
+
 
     nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
@@ -197,15 +204,22 @@ def walkRegular(agent):
     if nextdirection == dirNotSetYet and freeNE and freeE and agentinSE and not agentinNW:
         nextdirection = dirE  # freeE is True
 
-    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
-    # climb on agent in W if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinW and freeNW) and ((not agentinNE) or (agentinNE and agentinE)):
-        nextdirection = dirNW
+    # myDistanceplusone = agents_and_distances[agent]
+    # myDistanceplusone = myDistanceplusone + 2
+    # myRatioplusone = myDistanceplusone / maxDistance
 
-    # climb on agent in E if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinE and freeNE) and ((not agentinNW) or (agentinNW and agentinW)):
-        nextdirection = dirNE
-    # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
+    #Climb only if not last in category
+    # if myDistanceplusone < alpha:
+    if True:
+        # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
+        # climb on agent in W if possible AND no other agent is on top of you
+        if nextdirection == dirNotSetYet and (agentinW and freeNW) and ((not agentinNE) or (agentinNE and agentinE)):
+            nextdirection = dirNW
+
+        # climb on agent in E if possible AND no other agent is on top of you
+        if nextdirection == dirNotSetYet and (agentinE and freeNE) and ((not agentinNW) or (agentinNW and agentinW)):
+            nextdirection = dirNE
+        # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
@@ -232,7 +246,7 @@ def walkHorizontal(agent):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     checkSurrounding(agent)
     myDistanceplusone = agents_and_distances[agent]
-    myDistanceplusone = myDistanceplusone + 2
+    myDistanceplusone = myDistanceplusone + 1
     myRatioplusone = myDistanceplusone / maxDistance
 
     myDistanceminusone = agents_and_distances[agent]
@@ -290,14 +304,6 @@ def walkHorizontal(agent):
         nextdirection = dirNE
     # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
 
-    # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
-    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeE and agentinNE and not agentinNW:
-        nextdirection = dirE  # freeE is True
-    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
-    # Why not also case for W?
-    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE:
-        nextdirection = dirW
-    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
 
     if nextdirection == dirNotSetYet and freeNE and freeE and agentinSE and agentinSW and not agentinNW:
         nextdirection = dirE  # freeE is True, THIS EAST
@@ -305,12 +311,20 @@ def walkHorizontal(agent):
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
-    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW:
-
-        nextdirection = dirE
+    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW and myRatioplusone < beta:
+        nextdirection = dirStand
 
         print("Walk Horizontal: This Going East 1:", agent, agents_and_distances[agent], maxDistance, agents_and_distances[agent]/ maxDistance, myRatioplusone,
               beta)
+
+    # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
+    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeE and agentinNE and not agentinNW:
+        nextdirection = dirE  # freeE is True
+    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
+    # Why not also case for W?
+    if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE and not agentinE:
+        nextdirection = dirW
+    # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
 
     #
     # if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
@@ -320,7 +334,8 @@ def walkHorizontal(agent):
 
     # This will move all to the EAST
 
-    if agents_and_distances[agent] == maxDistance and agentinSE and freeE and myRatioplusone < beta:
+    # if agents_and_distances[agent] == maxDistance and agentinSE and freeE and myRatioplusone < beta:
+    if agentinSE and freeE and freeW and freeSW and freeNW and freeNE:
         nextdirection = dirE
         print("Walk Horizontal: This Going East 2:", agent, agents_and_distances[agent], maxDistance, myRatioplusone,
               beta)
@@ -328,12 +343,14 @@ def walkHorizontal(agent):
         # print("Walk Horizontal: Going East:", agent, agents_and_distances[agent], maxDistance, myRatiominusone, alpha)
     if agentinW and freeSW and freeSE:
         nextdirection = dirStand
-    elif agentinSW and not agentinE and freeSE and freeNW and freeNE and agents_and_distances[agent] == maxDistance:
+    elif agentinSW and freeSE and freeNW and freeNE and myRatiominusone > alpha: #and agents_and_distances[agent] == maxDistance
         nextdirection = dirSE
+    # elif agentinSW and agentinE and freeSE and freeNW and freeNE:  # and agents_and_distances[agent] == maxDistance
+    #     nextdirection = dirSE
 
-    if agentinSW and agentinE and freeW and freeNW and freeNE and freeSE and myRatiominusone >= alpha:
-        nextdirection = dirSE
-        # print("Walk Horizontal: Going down:", agent, agents_and_distances[agent], maxDistance, myRatiominusone, alpha)
+    # if agentinSW and agentinE and freeW and freeNW and freeNE and freeSE and myRatiominusone >= alpha:
+    #     nextdirection = dirSE
+        # print("Walk Horizontal: Going down: ", agent, agents_and_distances[agent], maxDistance, myRatiominusone, alpha)
     if agentinSW and agentinSE and freeE:
         nextdirection = dirE
         print("Walk Horizontal: This Going East 3:", agent, agents_and_distances[agent], maxDistance, myRatioplusone,
@@ -432,7 +449,7 @@ def walkBridgeend(agent):
     # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
     # Why not also case for W?
     if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE:
-        nextdirection = dirW
+        nextdirection = dirStand
     # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
 
     if nextdirection == dirNotSetYet and freeNE and freeE and agentinSE and not agentinNW:
@@ -446,7 +463,7 @@ def walkBridgeend(agent):
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
-    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW:
+    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW and not agentinW:
         nextdirection = dirE
     #
     # if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
@@ -473,8 +490,11 @@ def walkBridgeend(agent):
     myDistanceminusone = agents_and_distances[agent]
     myDistanceminusone = myDistanceminusone - 2
     myRatiominusone = myDistanceminusone / maxDistance
-    if agentinSW and agentinE and freeW and freeNW and freeNE and freeSE and myRatiominusone >= alpha:
+    if agentinSW and agentinE and freeNW and freeNE and freeSE and myRatiominusone >= alpha:
         nextdirection = dirSE
+    if agentinSW and freeNW and freeNE and freeE and freeSE:
+        nextdirection = dirSE
+
         # print("WalkBridgeEnd: Going SE:", agent, agents_and_distances[agent], maxDistance, myRatiominusone, alpha)
 
     # CASE Begin: FALLING Start  - freeSW and freeSE -   Check whether Agent needs to fall
@@ -489,9 +509,12 @@ def walkBridgeend(agent):
             nextdirection = dirSE
     # CASE End: FALLING End  - freeSW and freeSE -   Check whether Agent needs to fall
 
-    if agents_and_distances[agent] == maxDistance and agentinW and freeNW and freeNE and freeE and freeSW and freeSE:
-        nextdirection = dirSW
-    if agents_and_distances[agent] < maxDistance and agentinW and agentinSE and freeNW and freeNE and freeE and freeSW:
+    # if agents_and_distances[agent] == maxDistance and agentinW and freeNW and freeNE and freeE and freeSW and freeSE:
+    #     nextdirection = dirSW
+    # if agents_and_distances[agent] < maxDistance and agentinW and freeNW and freeNE and freeE and freeSW and agentinSE :
+    #     nextdirection = dirSW
+
+    if agentinW and freeNW and freeNE and freeE and freeSW:
         nextdirection = dirSW
 
 
