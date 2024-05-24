@@ -250,9 +250,9 @@ def get_new_matter_color_picker():
 # noinspection PyUnresolvedReferences
 def get_matter_radios():
     p_radio = QRadioButton("agent")
-    p_radio.setChecked(False)
+    p_radio.setChecked(True)
     t_radio = QRadioButton("item")
-    t_radio.setChecked(True)
+    t_radio.setChecked(False)
     l_radio = QRadioButton("location")
     l_radio.setChecked(False)
 

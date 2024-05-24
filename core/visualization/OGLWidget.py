@@ -50,7 +50,7 @@ class OGLWidget(QtOpenGL.QGLWidget):
         self.rotation_sensitivity = 5
         self.zoom_sensitivity = 100
         self.cursor_zoom_sensitivity = 200
-        self.cursor_type = MatterType.ITEM
+        self.cursor_type = MatterType.AGENT
         self.added_matter_color = (1.0, 0.0, 0.0, 1.0)
 
         self.camera = camera

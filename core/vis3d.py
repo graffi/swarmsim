@@ -1,5 +1,6 @@
 import importlib
 import os
+from datetime import datetime
 from threading import Thread
 
 import cv2
@@ -241,7 +242,7 @@ class Visualization:
         self._viewer.glDraw()
 
         # reset the previous position after animation.
-        # not reseting it causes a visual bug if the matter didn't move.
+        # not resetting it causes a visual bug if the matter didn't move.
         for agent in self._viewer.agent_offset_data:
             current_data = self._viewer.agent_offset_data[agent]
             self._viewer.agent_offset_data[agent] = (current_data[0], current_data[1], agent.coordinates,
@@ -607,14 +608,26 @@ class Visualization:
 
     def do_export(self, rps, width, height, codec, first_frame_idx, last_frame_idx, animation):
 
-        if not os.path.exists("outputs/videos") or not os.path.isdir("outputs/videos"):
-            os.mkdir("outputs/videos")
+        output_dir = "outputs/videos"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         directory = "."
         if os.path.exists("outputs/videos") and os.path.isdir("outputs/videos"):
             directory = "outputs/videos"
-        path = TopQFileDialog(self._splitter).getSaveFileName(options=(TopQFileDialog.Options()),
-                                                              filter="*.mp4;;*.avi;;*.mkv",
-                                                              directory=directory)
+
+            # Generate the default file name
+        current_time = datetime.now().strftime("%Y-%m-%d__%H-%M")
+
+        default_file_name = f"{current_time}__Recording.mp4"
+
+        print("File name:", default_file_name)
+        # Combine the directory and default file name
+        default_path = os.path.join(output_dir, default_file_name)
+        print("Path name:", default_file_name)
+
+
+        path = TopQFileDialog(self._splitter).getSaveFileName(options=(TopQFileDialog.Options()), filter="*.mp4;;*.avi;;*.mkv", directory=default_path)
+        # directory = directory)
         if path[0] == '':
             return
 
