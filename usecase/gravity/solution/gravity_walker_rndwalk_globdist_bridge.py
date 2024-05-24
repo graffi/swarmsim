@@ -10,7 +10,7 @@ def solution(world):
     stopiftowerbuilt = False
     debugon = False
 
-    global agents_and_distances, alpha, beta, nextdirection
+    global agents_and_distances, alpha, beta, nextdirection, paramStartFromTowerHeight, agentCount
     global dirE, dirW, dirNE, dirSE, dirSW, dirNW, dirStand, dirNotSetYet
 
     global iteminE, iteminW, iteminNE, iteminNW, iteminSE, iteminSW
@@ -18,9 +18,9 @@ def solution(world):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     global color1, color2, color3, color4
 
-    paramStartFromTowerHeight = 0.7
-    alpha = 0.2
-    beta = 0.6
+    paramStartFromTowerHeight = 0.5
+    alpha = 0.3
+    beta = 0.7
 
     color1 = (0.0, 0.2, 0.2, 1.0)
     color2 = (0.0, 0.6, 0.0, 1.0)
@@ -152,7 +152,8 @@ def walkRegular(agent):
     nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
     # CASE Begin: FALLING Start  - freeSW and freeSE -   Check whether Agent needs to fall
-    if freeSW and freeSE:
+    # Should only apply if the tower building is active OR this is not the last green, which just turned yellow)
+    if freeSW and freeSE and (maxDistance < paramStartFromTowerHeight * agentCount or myRatioplusone < alpha):
         yposition = agent.coordinates[1]
 
         # We know already that this agent must fall, it will be in a zig (SE) - zag (SW) pattern, depending on the height (y - coordinate)
@@ -220,20 +221,22 @@ def walkRegular(agent):
     if True:
         # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
         # climb on agent in W if possible AND no other agent is on top of you
-        if nextdirection == dirNotSetYet and (agentinW and freeNW) and ((not agentinNE) or (agentinNE and agentinE)):
+        if nextdirection == dirNotSetYet and (agentinW and freeNW) and ((not agentinNE) or (agentinNE and agentinE)) and (maxDistance < paramStartFromTowerHeight * agentCount or myRatioplusone < alpha):
             nextdirection = dirNW
 
         # climb on agent in E if possible AND no other agent is on top of you
-        if nextdirection == dirNotSetYet and (agentinE and freeNE) and ((not agentinNW) or (agentinNW and agentinW)):
+        # LAST Green should not climb on Yellow (Except there are sufficient green around)
+        if nextdirection == dirNotSetYet and (agentinE and freeNE) and ((not agentinNW) or (agentinNW and agentinW)) and (agentinSE or (maxDistance < paramStartFromTowerHeight * agentCount or myRatioplusone < alpha)):
             nextdirection = dirNE
         # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
-    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW:
+    # We must forbid that the LAST green agents slides to the east (or west), as the yellow nodes are not stable! Hm, only to apply once the special rules apply.
+    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW and (maxDistance < paramStartFromTowerHeight * agentCount or myRatioplusone < alpha):
         nextdirection = dirE
 
-    if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE:
+    if nextdirection == dirNotSetYet and agentinSW and not agentinSE and freeW and not agentinNE and not agentinE:
         yposition = agent.coordinates[1]
         nextdirection = dirW
     # CASE END: TOWER SHIFT LEFT AND RIGHT
@@ -320,7 +323,9 @@ def walkHorizontal(agent):
 
     # CASE Begin: TOWER SHIFT LEFT AND RIGHT
     # if standing only on agent in SE, check whether we need to move to E
-    if nextdirection == dirNotSetYet and agentinSE and not agentinSW and freeE and not agentinNW and myRatioplusone < beta:
+    # and not agentinSW  - > check if needed
+    if nextdirection == dirNotSetYet and agentinSE and freeE and not agentinNW and myRatioplusone < beta:
+
         nextdirection = dirStand
 
         # print("Walk Horizontal: This Going East 1:", agent, agents_and_distances[agent], maxDistance, agents_and_distances[agent]/ maxDistance, myRatioplusone, beta)
@@ -359,7 +364,7 @@ def walkHorizontal(agent):
     # if agentinSW and agentinE and freeW and freeNW and freeNE and freeSE and myRatiominusone >= alpha:
     #     nextdirection = dirSE
         # print("Walk Horizontal: Going down: ", agent, agents_and_distances[agent], maxDistance, myRatiominusone, alpha)
-    if agentinSW and agentinSE and freeE:
+    if agentinSW and agentinSE and freeE and not agentinNW:
         nextdirection = dirE
         print("Walk Horizontal: This Going East 3:", agent, agents_and_distances[agent], maxDistance, myRatioplusone,
               beta)
