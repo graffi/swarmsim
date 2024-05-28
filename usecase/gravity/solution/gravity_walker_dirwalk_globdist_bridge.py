@@ -84,6 +84,7 @@ def solution(world):
                 elif myRatio >= beta :
                     agent.set_color(color4)
                     walkBridgeend(agent)
+                    # test
 
         # For next step: define the goal of the simulation, e.g. to build a tower of n agents and then terminate the simulation
 
