@@ -1,6 +1,6 @@
 import math
 import random
-
+import colorsys
 
 def solution(world):
     global minAgentHeight, maxAgentHeight, maxDistance
@@ -8,6 +8,7 @@ def solution(world):
     maxAgentHeight = 0
     maxDistance = 0
     stopiftowerbuilt = False
+    visualizeEachMove = False
     debugon = False
 
     global agents_and_distances, alpha, beta, nextdirection, paramStartFromTowerHeight, agentCount
@@ -18,7 +19,7 @@ def solution(world):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     global color1, color2, color3, color4
 
-    paramStartFromTowerHeight = 0.9
+    paramStartFromTowerHeight = 0.4
     alpha = 0.3
     beta = 0.6
 
@@ -35,6 +36,8 @@ def solution(world):
     dirE = (1, 0, 0)
     dirStand = (0, 0, 0)
     dirNotSetYet = (0, 0, 1)
+
+
 
     if world.get_actual_round() % 1 == 0:
 
@@ -62,48 +65,70 @@ def solution(world):
         # From here we focus on the movement of each agent
         for agent in world.get_agent_list():
             # calculate for this specific agent it ratio = own-distance / max-distance
-            # print(world.get_actual_round(), " Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
-            checkSurrounding(agent)
-            agentCount = len(world.get_agent_list())
+            if not visualizeEachMove or world.get_actual_round() % world.get_amount_of_agents() == agent.number - 1:
+                print("XXXXXXX", world.get_actual_round(), " Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
-            if maxDistance == 0 or agent not in agents_and_distances:
-                agent.set_color(color1)
-                walkRegular(agent)
-            else:
-                myRatio = agents_and_distances[agent] / maxDistance
-                if maxDistance < paramStartFromTowerHeight * agentCount:
+                print(world.get_actual_round(), " Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
+                checkSurrounding(agent)
+                agentCount = len(world.get_agent_list())
+
+                if maxDistance == 0 or agent not in agents_and_distances:
                     agent.set_color(color1)
-                    walkDirected(agent)
-                elif myRatio < alpha :
-                    agent.set_color(color2)
+
+
+
+                    agent.write_memory_with("status", "towerbuild")
+                    agent.write_memory_with("owndistance", 1)
+
+
+                    # mydistance = age
+                    # agent.read_memory_with("owndistance")
+
+
+
+
+
+                    
                     walkRegular(agent)
-                elif myRatio >= alpha and myRatio < beta :
-                    agent.set_color(color3)
-                    walkHorizontal(agent)
-                elif myRatio >= beta :
-                    agent.set_color(color4)
-                    walkBridgeend(agent)
-                    # test
+                else:
+                    myRatio = agents_and_distances[agent] / maxDistance
+                    set_rainbow_color(agent, agents_and_distances[agent], maxDistance)
 
-        # For next step: define the goal of the simulation, e.g. to build a tower of n agents and then terminate the simulation
+                    if maxDistance < paramStartFromTowerHeight * agentCount:
+                        # agent.set_color(color1)
+                        walkDirected(agent)
+                    elif myRatio < alpha :
+                        # agent.set_color(color2)
+                        walkRegular(agent)
+                    elif myRatio >= alpha and myRatio < beta :
+                        # agent.set_color(color3)
+                        walkHorizontal(agent)
+                    elif myRatio >= beta :
+                        # agent.set_color(color4)
+                        walkBridgeend(agent)
+                        # test
+
+            # For next step: define the goal of the simulation, e.g. to build a tower of n agents and then terminate the simulation
 
 
 
-        if agent.coordinates[1] > maxAgentHeight:
-            maxAgentHeight = agent.coordinates[1]
-        if agent.coordinates[1] < minAgentHeight:
-            minAgentHeight = agent.coordinates[1]
+            if agent.coordinates[1] > maxAgentHeight:
+                maxAgentHeight = agent.coordinates[1]
+            if agent.coordinates[1] < minAgentHeight:
+                minAgentHeight = agent.coordinates[1]
 
-        towerheight = maxAgentHeight - minAgentHeight + 1
-        if debugon:
-            print("Round: ", world.get_actual_round(), "MaxHeight: ", maxAgentHeight, "Minheight: ", minAgentHeight,
-              "Towerheight: ", towerheight, "  Agent No.", agent.number, "  Coordinates", agent.coordinates,
-              " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
+            towerheight = maxAgentHeight - minAgentHeight + 1
+            if debugon:
+                print("Round: ", world.get_actual_round(), "MaxHeight: ", maxAgentHeight, "Minheight: ", minAgentHeight,
+                  "Towerheight: ", towerheight, "  Agent No.", agent.number, "  Coordinates", agent.coordinates,
+                  " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
-        TowerHasBeenBuilt = (towerheight == world.get_amount_of_agents())
-        if TowerHasBeenBuilt and stopiftowerbuilt:
-            world.set_successful_end()
+            TowerHasBeenBuilt = (towerheight == world.get_amount_of_agents())
+            if TowerHasBeenBuilt and stopiftowerbuilt:
+                world.set_successful_end()
+
+
 
 
 def checkSurrounding(agent):
@@ -145,7 +170,7 @@ def walkRegular(agent):
     myRatioplusone = 0
     try:
         myDistanceplusone = agents_and_distances[agent]
-        myDistanceplusone = myDistanceplusone + 1
+        myDistanceplusone = myDistanceplusone + 2
         myRatioplusone = myDistanceplusone / maxDistance
     except:
         print("Agent ", agent, " has no distance")
@@ -745,3 +770,35 @@ def calculateDistances(world):
 
 
     return mydistances
+
+
+def set_rainbow_color(agent, myDist, maxDist):
+    agentCount = len(agent.world.agents)
+    myDist
+    agentMaxDist = maxDist
+
+    # Saturation and Value are set to 1 for full color
+    saturation = 1.0
+    value = 1.0
+
+    # Normalize myDist to a value between 0 and 1
+    normalized_dist = 0
+    normalized_dist = myDist / agentMaxDist
+
+    # Convert the normalized value to a hue in the HSV color space
+    hue = normalized_dist
+    rgba = (0.0,0.0,0.0,1.0)
+
+
+    # Convert HSV to RGB
+    try:
+        rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+        rgba = (rgb[0], rgb[1], rgb[2], 1.0)
+        print("Success: myDist", myDist, "Max", agentMaxDist, "Hue ", hue, "Saturation", saturation, "Value", value, "RGBA", rgba)
+    except:
+        print("Failed: myDist", myDist, "Max", agentMaxDist, "Hue ", hue, "Saturation", saturation, "Value", value, "RGBA", rgba)
+    # Convert RGB to RGBA by adding an alpha value of 1.0
+
+
+    # Set the color of the agent
+    agent.set_color(rgba)
