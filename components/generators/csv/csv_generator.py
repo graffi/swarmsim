@@ -21,7 +21,7 @@ class CsvAgentFile:
         if not file_exists:
             self.csv_file = open(self.file_name, 'w', newline='')
             self.writer = csv.writer(self.csv_file)
-            self.writer.writerow(['Agent ID', 'Agent Number',
+            self.writer.writerow(['Agent ID', 'Agents',
                                   'Locations Created', 'Locations Deleted',
                                   'Location Read', 'Location Write',
                                   'Memory Read', 'Memory Write',

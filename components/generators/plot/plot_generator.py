@@ -20,6 +20,12 @@ def plotter(data, name, x_index, y_start, plot_dir):
     csv_object = csv.reader(data, delimiter=',')
     a = next(csv_object)
     plot_type = "line"
+    plt.rcParams.update({'font.size': 28})
+    plt.gray()
+    # font = {'family': 'normal',
+    #         'weight': 'bold',
+    #         'size': 22}
+    # plt.rc('font', **font)
     x = []
     y = []
     plt.figure(figsize=(20, 12))
@@ -36,13 +42,25 @@ def plotter(data, name, x_index, y_start, plot_dir):
             else:
                 y.append(np.nan)
         if plot_type == "line":
-            plt.plot(x, y)
+            if (name=="agents"):
+
+                print("X", x, "Y", y, "name", name )
+                xsorted = sorted(x)
+                ysorted = sorted(y)
+
+                print("Xsort", xsorted)
+                print("Ysort", ysorted)
+                plt.plot(xsorted, ysorted, linestyle='solid', color='black',linewidth=4, markersize=12)
+                #plt.plot(x, y, linestyle='dashed', color='black', linewidth=4, markersize=12)
+            else:
+                plt.plot(x, y, linestyle='solid', color='black', linewidth=4, markersize=12)
         elif plot_type == "bar":
             plt.bar(x, y, align='edge', width=0.5)
         plt.xlabel(a[x_index])
         plt.xticks(rotation=45)
         plt.ylabel(a[col])
         plt.savefig(plot_dir + '/' + name + '_' + a[col] + '.png')
+        plt.savefig(plot_dir + '/' + name + '_' + a[col] + '.pdf', format="pdf", bbox_inches="tight")
         plt.clf()
         data.seek(0)
         plot = csv.reader(data, delimiter=',')
