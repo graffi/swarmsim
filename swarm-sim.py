@@ -8,7 +8,7 @@ import time
 import random
 from core import world, config
 from core.vis3d import ResetException
-from lib.std_lib import *
+from core.std_lib import *
 # import pdb
 
 def swarm_sim(argv):
@@ -103,8 +103,8 @@ def create_directory_for_data(config_data, unique_descriptor):
     if config_data.multiple_sim == 1:
         config_data.directory_name = "%s/%s" % (unique_descriptor, str(config_data.seed_value))
 
-        config_data.directory_name = "./outputs/csv/mulitple/" + config_data.directory_name
-        config_data.directory_plot = "./outputs/plot/mulitple/" + config_data.directory_name
+        config_data.directory_csv = "./outputs/multiple/" + config_data.directory_name
+        config_data.directory_plot = "./outputs/multiple/" + config_data.directory_name
 
 
     else:
