@@ -25,8 +25,15 @@ class Agent(matter.Matter):
         self.carried_item = None
         self.carried_agent = None
         self.steps = 0
-        csv_generator_module = importlib.import_module('components.generators.csv.%s' % world.config_data.csv_generator)
+        csv_generator_module = importlib.import_module('components.generators.csv.%s' % world.config_data.csv_generator) #HERE STAT
         self.csv_agent_writer = csv_generator_module.CsvAgentData(self.get_id(), self.number)
+
+        #custom attributes
+        self.fixed = False
+        self.signal = 0
+        self.ground = 999
+        self.state = 0
+        self.timer = 0
 
     def carries_item(self):
         if self.carried_item is None:
@@ -88,8 +95,8 @@ class Agent(matter.Matter):
             if self.world.vis is not None:
                 self.world.vis.agent_changed(self)
             logging.info("Agent %s successfully moved to %s", str(self.get_id()), direction)
-            self.world.csv_round.update_metrics(steps=1)
-            self.csv_agent_writer.write_agent(steps=1)
+            self.world.csv_round.update_metrics(steps=1)    #HERE STAT
+            self.csv_agent_writer.write_agent(steps=1)      #HERE STAT
             self.check_for_carried_matter()
             return True
 
@@ -110,10 +117,10 @@ class Agent(matter.Matter):
             if self.world.config_data.type == 1:
                 if abs(direction_coord[0]) > self.world.get_x_size():
                     direction_coord = (
-                        -1 * (self.coordinates[0] - direction[0]), direction_coord[1], direction_coord[2])
+                        -1 * (self.coordinates[0] - direction[NE]), direction_coord[1], direction_coord[2])
                 if abs(direction_coord[1]) > self.world.get_y_size():
                     direction_coord = (
-                        direction_coord[0], -1 * (self.coordinates[1] - direction[1]), direction_coord[2])
+                        direction_coord[0], -1 * (self.coordinates[1] - direction[E]), direction_coord[2])
                 if abs(direction_coord[2]) > self.world.get_z_size():
                     direction_coord = (
                         direction_coord[0], direction_coord[1], -1 * (self.coordinates[2] - direction[2]))
