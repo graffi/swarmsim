@@ -22,7 +22,8 @@ def main(argv):
     except (configparser.NoOptionError) as noe:
         solution_file = "solution.py"
 
-    n_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')[:-1]
+    n_time = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S')[:-1])
+
     # n_time = datetime.now().strftime('%Y-%m-%d_%H')[:-1]
     try:
         opts, args = getopt.getopt(argv, "hs:w:r:n:v:", ["scenaro=", "solution="])
@@ -45,7 +46,7 @@ def main(argv):
         elif opt in ("-n", "--maxrounds"):
             max_round = int(arg)
 
-    direction = "./outputs/multiple/" + str(n_time) + "_" + scenario_file.rsplit('.', 1)[0] + "_" + \
+    direction = "./outputs/multiple/" + n_time + "_" + scenario_file.rsplit('.', 1)[0] + "_" + \
           solution_file.rsplit('.', 1)[0]
 
     if not os.path.exists(direction):
@@ -54,7 +55,7 @@ def main(argv):
     child_processes = []
     process_cnt=0
     for seed in range(seed_start, seed_end+1):
-        process ="python", "swarm-sim.py", "-n"+ str(max_round), "-m 1", "-d"+str(n_time), "-r"+ str(seed), "-v" + str(0)
+        process ="python", "swarm-sim.py", "-n"+ str(max_round), "-m 1", "-d"+n_time, "-r"+ str(seed), "-v" + str(0)
         p = subprocess.Popen(process, stdout=out, stderr=out)
         child_processes.append(p)
         process_cnt += 1
