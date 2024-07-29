@@ -2,6 +2,7 @@ import sys, getopt, subprocess
 from datetime import datetime
 import os
 import configparser
+import components.generators.plot.plot_generator as pltgen
 
 
 def main(argv):
@@ -75,6 +76,14 @@ def main(argv):
         f.close() # not really needed
     fout.close()
 
+    all_plot_generator(direction)
+
+def all_plot_generator(directory):
+    # def plotter(data, name, x_index, y_start, plot_dir):
+    with open(directory + "/" + "all_aggregates.csv", 'r') as data:
+        pltgen.plotter(data, "simulations", 2, 2, directory + "/all")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+

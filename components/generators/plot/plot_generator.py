@@ -42,7 +42,7 @@ def plotter(data, name, x_index, y_start, plot_dir):
             else:
                 y.append(np.nan)
         if plot_type == "line":
-            if (name=="agents"):
+            if (name=="agents" or name=="simulations"):
 
                 print("X", x, "Y", y, "name", name )
                 xsorted = sorted(x)
