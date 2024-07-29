@@ -5,7 +5,7 @@ import configparser
 
 
 def main(argv):
-    max_round = 10000
+    max_round = 100
     seed_start = 1
     seed_end = 5
     config = configparser.ConfigParser(allow_no_value=True)
@@ -68,7 +68,8 @@ def main(argv):
     fout = open(direction+"/all_aggregates.csv","w+")
     for seed in range(seed_start, seed_end+1):
         f = open(direction+"/"+str(seed)+"/aggregate_rounds.csv")
-        f.__next__() # skip the header
+        if seed != seed_start:
+            f.__next__() # skip the header
         for line in f:
             fout.write(line)
         f.close() # not really needed
