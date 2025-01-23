@@ -8,7 +8,7 @@ def solution(world):
     maxAgentHeight = 0
     maxDistance = 0
     stopiftowerbuilt = False
-    visualizeEachMove = False
+    visualizeEachMove = True
     debugon = False
 
     global agents_and_distances, alpha, beta, nextdirection, paramStartFromTowerHeight, agentCount

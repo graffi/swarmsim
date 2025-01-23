@@ -18,9 +18,9 @@ def solution(world):
     global freeW, freeE, freeNE, freeNW, freeSE, freeSW
     global color1, color2, color3, color4
 
-    paramStartFromTowerHeight = 0.5
+    paramStartFromTowerHeight = 0.9
     alpha = 0.3
-    beta = 0.7
+    beta = 0.6
 
     color1 = (0.0, 0.2, 0.2, 1.0)
     color2 = (0.0, 0.6, 0.0, 1.0)
@@ -310,7 +310,7 @@ def walkHorizontal(agent):
     #     nextdirection = dirNW
     #
     # climb on agent in E if possible AND no other agent is on top of you
-    if nextdirection == dirNotSetYet and (agentinE and freeNE)  and not agentinW and ((not agentinNW) or (agentinNW and agentinW)) and agentinSE:
+    if nextdirection == dirNotSetYet and (agentinE and freeNE)  and not agentinW and ((not agentinNW) or (agentinNW and agentinW)) and agentinSE and myRatioplusone < beta:
         nextdirection = dirNE
     if nextdirection == dirNotSetYet and (agentinE and freeNE)  and not agentinW and ((not agentinNW) or (agentinNW and agentinW)) and myRatiominusone > alpha:
         nextdirection = dirNE

@@ -4,7 +4,7 @@ import random
 def solution(world):
     minAgentHeight = 0
     maxAgentHeight = 0
-    stopiftowerbuilt = True
+    stopiftowerbuilt = False
 
     if world.get_actual_round() % 1 == 0:
         # if world.get_actual_round() == 1:

@@ -15,6 +15,7 @@ import usecase.coating.solution.p_max_lifetime.coating_alg as coating_mod
 # import solution.goal_test as goal_test
 import usecase.coating.solution.p_max_lifetime.coating_alg as coating_alg
 import usecase.coating.solution.goal_test as goal_test
+import colorsys
 
 cycle_no = 3
 
@@ -38,9 +39,12 @@ def solution(world):
 
         coating_mod.initialize_agents(world)
 
+
     for agent in world.agents:
+        currentColor = agent.get_color()
+        set_rainbow_color(agent)
         # resets all agents last movement direction every 10 cycles
-        print("Agent Nr ", str(agent.number))
+        print("Agent Nr ", str(agent.number), " Color: ", agent.get_color())
         if world.get_actual_round() % (cycle_no * 10) == 1:
             if len(agent.prev_direction) > 0:
                 agent.prev_direction.pop(0)
@@ -68,7 +72,12 @@ def initialize_agents(world):
     """
     for agent in world.agents:
         # coating_alg.initialize_agent(agent)
+        if color is None:
+            color = self.config_data.agent_color
+        else:
+            color = agent.set_rainbow_color()
         initialize_agent(agent)
+        # agent.set_color(currcol)
 
         if random.random() < world.config_data.agent_fail_quote:
             agent.willfail = True
@@ -84,6 +93,15 @@ def write_cycle(agent):
     """
     agent.next_direction = coating_alg.coating_alg(agent)
     if agent.own_dist != math.inf:
+
+
+
+
+        if len(agent.p_max.ids) > 0 and agent.p_max.dist > 0:
+            set_rainbow_color(agent)
+
+
+
         if len(agent.p_max.ids) > 0 and agent.p_max.dist > 0 and agent.next_direction is False:
             # agent.p_max_table.update({agent.p_max.id: agent.p_max.dist})
             read_write_mod.send_p_max_to_neighbors(agent)
@@ -95,6 +113,37 @@ def write_cycle(agent):
         if agent.agent_in(next_dir):
             read_write_mod.send_target_item(agent, next_dir)
 
+
+def set_rainbow_color(agent):
+    agentCount = len(agent.world.agents)
+    myDist = agent.own_dist
+    agentMaxDist = agent.p_max.dist
+
+    # Saturation and Value are set to 1 for full color
+    saturation = 1.0
+    value = 1.0
+
+    # Normalize myDist to a value between 0 and 1
+    normalized_dist = 0
+    normalized_dist = myDist / agentMaxDist
+
+    # Convert the normalized value to a hue in the HSV color space
+    hue = normalized_dist
+    rgba = (0.0,0.0,0.0,1.0)
+
+
+    # Convert HSV to RGB
+    try:
+        rgb = colorsys.hsv_to_rgb(hue, saturation, value)
+        rgba = (rgb[0], rgb[1], rgb[2], 1.0)
+        print("Success: myDist", myDist, "Max", agentMaxDist, "Hue ", hue, "Saturation", saturation, "Value", value, "RGBA", rgba)
+    except:
+        print("Failed: myDist", myDist, "Max", agentMaxDist, "Hue ", hue, "Saturation", saturation, "Value", value, "RGBA", rgba)
+    # Convert RGB to RGBA by adding an alpha value of 1.0
+
+
+    # Set the color of the agent
+    agent.set_color(rgba)
 
 # def read_cycle(agent: agent_class) -> None:
 def read_cycle(agent):
@@ -120,6 +169,7 @@ def move_cycle(agent):
     @param agent: the agent whose turn it is
     """
     if agent.next_direction is False and agent.own_dist > 1:
+
         if debug and debug_movement:
             print("moving closer to target item")
         move_to_target_item(agent)

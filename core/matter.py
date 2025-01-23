@@ -51,7 +51,7 @@ class Matter:
 
     def write_memory_with(self, key, data):
         """
-        Write on its own memory a data with a keywoard
+        Write on its own memory a data with a keyword
 
         :param key: A string keyword for orderring the data into the memory
         :param data: The data that should be stored into the memory
@@ -101,6 +101,7 @@ class Matter:
         :param color: matter color
         :return: None
         """
+        print("Self", self, "changing color to", color)
         if len(color) != 4:
             raise VisualizationError(
                 "Invalid color format!\ncolor has to be in rgba format => (float, float, float, float)", Level.WARNING)

@@ -1,4 +1,4 @@
-from lib.swarm_sim_header import get_coordinates_in_direction
+from core.swarm_sim_header import get_coordinates_in_direction
 import random
 
 def scenario(world):

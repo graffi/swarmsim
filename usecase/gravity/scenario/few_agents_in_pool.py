@@ -46,7 +46,8 @@ def scenario(world):
     world.add_item(5.5, -5)
     world.add_item(6.5, -5)
 
-
+    for i in range(0,10):
+        world.add_item(-35.5-i, -5)
 
 
     # world.add_item(-12.5, 1)

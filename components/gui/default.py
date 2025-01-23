@@ -92,7 +92,7 @@ def sim_tab():
     global start_stop_button
     # start stop button
 
-    start_stop_button = QPushButton("start Simulation")
+    start_stop_button = QPushButton("start simulation")
     start_stop_button.setIcon(start_stop_button.style().standardIcon(QStyle.SP_MediaPlay))
     start_stop_button.setStyleSheet("font-weight:bold;")
     status = QLabel("Simulation not running")
@@ -176,7 +176,7 @@ def sim_tab():
     del_recording_button.clicked.connect(del_rec)
     export_recording_button.clicked.connect(vis.export_recording)
 
-    reset_button = QPushButton("reset Simulation")
+    reset_button = QPushButton("reset simulation")
 
     def reset_sim():
         start_stop_button.setText("start Simulation")
@@ -222,6 +222,8 @@ def sim_tab():
     vbox.addWidget(get_new_matter_color_picker())
     new_matter_box.setLayout(vbox)
     layout.addWidget(new_matter_box)
+
+
 
     layout.addStretch(0)
     tab.setLayout(layout)
