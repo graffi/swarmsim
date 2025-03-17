@@ -532,9 +532,10 @@ def release_signal(agent):
 
     if ((count_signal_0 == 1 and agent.item_in(rightDown)) or
             (count_signal_1 == 1 and free_spaces >= 5) or
-            ((agent.agent_in(right) and agent.get_agent_in(right).ready) or
-             (agent.agent_in(rightUp) and agent.get_agent_in(rightUp).ready) or
-             (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).ready))):
+            (agent.agent_in(right) and agent.get_agent_in(right).ready) or
+            (agent.agent_in(rightUp) and agent.get_agent_in(rightUp).ready) or
+            (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).ready) or
+            free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right)):
         agent.ready = True
     agent.write_memory_with("ready", agent.ready)
 
@@ -546,7 +547,8 @@ def release_signal(agent):
         return False
 
     return (((count_signal_1 == 1 and count_signal_0 == 1) or (count_signal_1 == 1 and free_spaces == 5)) or
-            (agent.foot in [0, 2] and agent.agent_in(right) and agent.get_agent_in(right).signal == 0 and agent.item_in(leftDown)))
+            (agent.foot in [0, 2] and agent.agent_in(right) and agent.get_agent_in(right).signal == 0 and agent.item_in(leftDown)) or
+            free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right))
 
 
 def update_foot(agent):
