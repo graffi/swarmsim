@@ -447,7 +447,8 @@ def alignment(agent):
         agent.adjust -= 1
         return rightUp
 
-    if (agent.item_in(leftDown) or (agent.agent_in(leftDown) and agent.get_agent_in(leftDown).adjust == 0)) and (agent.agent_in(rightUp) or free_spaces == 5):
+    # relocate adjust value on to the agent state
+    if ((agent.item_in(leftDown) and not agent.agent_in(left)) or (agent.agent_in(leftDown) and agent.get_agent_in(leftDown).adjust == 0)) and (agent.agent_in(rightUp) or free_spaces == 5):
         if agent.planned_direction == dirE:
             agent.state -= agent.adjust
         else:
