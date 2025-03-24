@@ -26,29 +26,12 @@ def solution(world):
 
     if world.get_actual_round() % 1 == 0:
         for agent in world.get_agent_list():
-            agent.write_memory_with("agent_number", agent.number)
 
             # KG: Correct: set minAgentHeight and maxAgentHeight to height of agent [1]
             if agent.coordinates[1] > maxAgentHeight:
                 maxAgentHeight = agent.coordinates[1]
             if agent.coordinates[1] < minAgentHeight:
                 minAgentHeight = agent.coordinates[1]
-
-            # Check whether in the direction of SE, SW are agents or items
-            # These directions are all relative to the current agent: First value is X coordinate (left right), second is the Y coordinate (up down), the third coordinate is for 3D coordinate systems but not used in 2D-Hex-Grid
-            iteminE = agent.item_in(dirE)
-            iteminW = agent.item_in(dirW)
-            iteminSE = agent.item_in(dirSE)
-            iteminSW = agent.item_in(dirSW)
-            iteminNE = agent.item_in(dirNE)
-            iteminNW = agent.item_in(dirNW)
-
-            agentinE = agent.agent_in(dirE)
-            agentinW = agent.agent_in(dirW)
-            agentinSE = agent.agent_in(dirSE)
-            agentinSW = agent.agent_in(dirSW)
-            agentinNE = agent.agent_in(dirNE)
-            agentinNW = agent.agent_in(dirNW)
 
             freeW = not agent.agent_in(dirW) and not agent.item_in(dirW)
             freeE = not agent.agent_in(dirE) and not agent.item_in(dirE)
@@ -60,18 +43,33 @@ def solution(world):
             nextdirection = dirNotSetYet  # characterizes an invalid state, will be changed later
 
             if not hasattr(agent, 'planned_direction'):
-                agent.planned_direction = random.choice([dirW, dirE])  # East or West
-                #print("Agent", agent.get_id(), "planned direction:", agent.planned_direction)
-            planned_direction = agent.planned_direction
-            agent.write_memory_with("planned_direction", planned_direction)
+                agent.planned_direction = random.choice([dirW, dirE])
 
-            if not hasattr(agent, 'weight'):
-                agent.weight = 0
             agent.weight = find_weight(agent)
-
             agent.ground = find_ground(agent)
-            # agent.csv_agent_writer.write_agent(steps=agent.ground)
+            planned_direction = agent.planned_direction
+
+            # writing each agents own information about planned direction, weight, distance from the ground, state and phase into memory
+            agent.write_memory_with("agent_number", agent.number)
+            agent.write_memory_with("planned_direction", planned_direction)
+            agent.write_memory_with("weight", agent.weight)
             agent.write_memory_with("ground", agent.ground)
+            agent.write_memory_with("timer", agent.timer)
+            agent.write_memory_with("state", agent.state)
+            agent.write_memory_with("fixed", agent.fixed)
+            agent.write_memory_with("signal", agent.signal)
+            agent.write_memory_with("adjust", agent.adjust)
+            # 0 = left, 1 = is foot, 2 = right, -1 = not set
+            agent.write_memory_with("foot", agent.foot)
+            agent.write_memory_with("ready", agent.ready)
+
+            # writing and passing
+            if (freeSE and agent.item_in(dirSW)) or agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("east_edge") or agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("east_edge"):
+                # agent has reached East Edge
+                agent.write_memory_with("east_edge", True)
+            if (freeSW and agent.item_in(dirSE)) or agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("west_edge") or agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("west_edge"):
+                # agent has reached West Edge
+                agent.write_memory_with("west_edge", True)
 
             if agent.ground >= falling:
                 if agent.timer >= 60:
@@ -81,13 +79,6 @@ def solution(world):
             else:
                 agent.timer = 0
 
-            if (freeSE and iteminSW) or agentinSE and agent.get_agent_in(dirSE).read_memory_with("east_edge") or agentinSW and agent.get_agent_in(dirSW).read_memory_with("east_edge"):
-                # agent has reached East Edge
-                agent.write_memory_with("east_edge", True)
-            if (freeSW and iteminSE) or agentinSE and agent.get_agent_in(dirSE).read_memory_with("west_edge") or agentinSW and agent.get_agent_in(dirSW).read_memory_with("west_edge"):
-                # agent has reached West Edge
-                agent.write_memory_with("west_edge", True)
-
             fixed_diagonal(agent)
             if agent.fixed:
                 if agent.adjust != 0:
@@ -95,14 +86,8 @@ def solution(world):
                 else:
                     nextdirection = directed_tentacle(agent)
 
-            agent.write_memory_with("timer", agent.timer)
-            agent.write_memory_with("state", agent.state)
-            agent.write_memory_with("fixed", agent.fixed)
-            agent.write_memory_with("signal", agent.signal)
-            agent.write_memory_with("adjust", agent.adjust)
-
+            # change color based on current phase/state
             agent.set_color(color_default)
-
             if agent.fixed:
                 agent.set_color(color_fixed)
             if agent.signal == 1:
@@ -124,68 +109,68 @@ def solution(world):
                         nextdirection = dirSE
                 # CASE End: FALLING End  - freeSW and freeSE -   Check whether Agent needs to fall
 
-                # CASE Begin: Agent is alone on the floor - Walk Left - Right -  iteminSE and iteminSW  - and nothing is above it
+                # CASE Begin: Agent is alone on the floor - Walk Left - Right -  agent.item_in(dirSE) and agent.item_in(dirSW)  - and nothing is above it
                 # Walk to left of right if possible, otherwise stand
-                if not agentinW and not agentinE:
+                if not agent.agent_in(dirW) and not agent.agent_in(dirE):
 
-                    if nextdirection == dirNotSetYet and iteminSE and iteminSW:
+                    if nextdirection == dirNotSetYet and agent.item_in(dirSE) and agent.item_in(dirSW):
                         # Move left or right
                         randdirection = planned_direction
                         nextdirection = dirStand
 
-                        if randdirection == dirW and freeW and not agentinNE:
+                        if randdirection == dirW and freeW and not agent.agent_in(dirNE):
                             nextdirection = planned_direction
-                        if randdirection == dirE and freeE and not agentinNW:
+                        if randdirection == dirE and freeE and not agent.agent_in(dirNW):
                             nextdirection = planned_direction
 
-                    if nextdirection == dirNotSetYet and freeSE and iteminSW and not agentinNE and freeW:
+                    if nextdirection == dirNotSetYet and freeSE and agent.item_in(dirSW) and not agent.agent_in(dirNE) and freeW:
                         nextdirection = dirW
                         agent.planned_direction = dirW
 
-                    if nextdirection == dirNotSetYet and freeSW and iteminSE and not agentinNW and freeE:
+                    if nextdirection == dirNotSetYet and freeSW and agent.item_in(dirSE) and not agent.agent_in(dirNW) and freeE:
                         nextdirection = dirE
                         agent.planned_direction = dirE
-                # CASE End: Agent is on the floor - Walk Left -Right - iteminSE and iteminSW  - and nothing is above it
+                # CASE End: Agent is on the floor - Walk Left -Right - agent.item_in(dirSE) and agent.item_in(dirSW)  - and nothing is above it
 
-                if agent.planned_direction == dirW and agentinW and agent.get_agent_in(dirW).fixed:
+                if agent.planned_direction == dirW and agent.agent_in(dirW) and agent.get_agent_in(dirW).fixed:
                     nextdirection = dirE
 
-                elif agent.planned_direction == dirE and agentinE and agent.get_agent_in(dirE).fixed:
+                elif agent.planned_direction == dirE and agent.agent_in(dirE) and agent.get_agent_in(dirE).fixed:
                     nextdirection = dirW
 
-                # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
-                if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeE and agentinNE and not agentinNW:
+                # CASE Begin: Agent is on 2 agents - agent.agent_in(dirSW) and agent.agent_in(dirSE) - and carries an agent in NE, walk E
+                if nextdirection == dirNotSetYet and agent.agent_in(dirSW) and agent.agent_in(dirSE) and freeE and agent.agent_in(dirNE) and not agent.agent_in(dirNW):
                     nextdirection = dirE
                     agent.planned_direction = dirE
-                # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NE, walk E
+                # CASE End: Agent is on 2 agents - agent.agent_in(dirSW) and agent.agent_in(dirSE) - and carries an agent in NE, walk E
 
-                # CASE Begin: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
-                if nextdirection == dirNotSetYet and agentinSW and agentinSE and freeW and agentinNW and not agentinNE:
+                # CASE Begin: Agent is on 2 agents - agent.agent_in(dirSW) and agent.agent_in(dirSE) - and carries an agent in NW, walk W
+                if nextdirection == dirNotSetYet and agent.agent_in(dirSW) and agent.agent_in(dirSE) and freeW and agent.agent_in(dirNW) and not agent.agent_in(dirNE):
                     nextdirection = dirW
                     agent.planned_direction = dirW
-                # CASE End: Agent is on 2 agents - agentinSW and agentinSE - and carries an agent in NW, walk W
+                # CASE End: Agent is on 2 agents - agent.agent_in(dirSW) and agent.agent_in(dirSE) - and carries an agent in NW, walk W
 
-                if nextdirection == dirNotSetYet and freeNE and freeNW and freeE and agentinSE:
+                if nextdirection == dirNotSetYet and freeNE and freeNW and freeE and agent.agent_in(dirSE):
                     nextdirection = dirE
                     agent.planned_direction = dirE
 
                 # CASE Begin: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
                 # climb on agent in W if possible AND no other agent is on top of you
-                if nextdirection == dirNotSetYet and agentinW and freeNW and freeNE:
+                if nextdirection == dirNotSetYet and agent.agent_in(dirW) and freeNW and freeNE:
                     nextdirection = dirNW
                 # climb on agent in E if possible AND no other agent is on top of you
-                if nextdirection == dirNotSetYet and agentinE and freeNE and freeNW:
+                if nextdirection == dirNotSetYet and agent.agent_in(dirE) and freeNE and freeNW:
                     nextdirection = dirNE
                 # CASE End: CLIMBING - Try climb NW, then try climb NE. Must be free, and carrying nothing
 
                 # CASE Begin: TOWER SHIFT LEFT AND RIGHT
                 # if standing only on agent in SE, check whether we need to move to E
-                if (nextdirection == dirNotSetYet or nextdirection == dirStand) and agentinSE and not agentinSW and freeE and not agentinNW:
+                if (nextdirection == dirNotSetYet or nextdirection == dirStand) and agent.agent_in(dirSE) and not agent.agent_in(dirSW) and freeE and not agent.agent_in(dirNW):
                     nextdirection = dirE
                     agent.planned_direction = dirE
                     dirWalkPlan = dirE
 
-                if (nextdirection == dirNotSetYet or nextdirection == dirStand) and agentinSW and not agentinSE and freeW and not agentinNE:
+                if (nextdirection == dirNotSetYet or nextdirection == dirStand) and agent.agent_in(dirSW) and not agent.agent_in(dirSE) and freeW and not agent.agent_in(dirNE):
                     yposition = agent.coordinates[1]
                     nextdirection = dirW
                     agent.planned_direction = dirW
@@ -206,30 +191,7 @@ def solution(world):
         #      "Towerheight: ", towerheight, "  Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height",
         #      agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
-
-def find_weight(agent):
-    weight = 0
-    for direction in directions:
-        if agent.agent_in(direction):
-            weight += 1
-    return weight
-
-
-def find_ground(agent):
-    if agent.item_in(dirSW) or agent.item_in(dirSE):
-        return 1
-
-    ground = agent.ground
-    chain = False
-
-    for direction in directions:
-        if agent.agent_in(direction) and agent.get_agent_in(direction).ground < ground:
-            ground = agent.get_agent_in(direction).ground + 1
-            chain = True
-    if not chain:
-        ground = falling
-    return ground
-
+##################################################
 
 def fixed_diagonal(agent):
     freeW = not agent.agent_in(dirW) and not agent.item_in(dirW)
@@ -264,7 +226,8 @@ def fixed_diagonal(agent):
         freeRightUp = freeNW
         freeLeftDown = freeSE
 
-    #if agent.weight == 1 or 2:
+##################################################
+
     if agent.fixed:
         # Conditions for unfixing the agent after diagonal formation
         has_left_support = freeLeft or (agent.agent_in(left) and agent.get_agent_in(left).fixed)
@@ -293,6 +256,8 @@ def fixed_diagonal(agent):
     elif agent.read_memory_with("east_edge") and agent.read_memory_with("west_edge") and freeLeftDown and (agent.item_in(rightDown) or (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).fixed) and agent.get_agent_in(rightDown).state == 0):
         agent.fixed = True
         log_memory_write(agent)
+
+##################################################
 
 def directed_tentacle(agent):
     freeW = not agent.agent_in(dirW) and not agent.item_in(dirW)
@@ -340,14 +305,17 @@ def directed_tentacle(agent):
         rightDown = dirSW
         leftDown = dirSE
 
-    # 0 = left, 1 = is foot, 2 = right, -1 = not set
-    agent.write_memory_with("foot", agent.foot)
+##################################################
 
     if agent.weight == 1 or 2:
         # normal mode to search islands
         if agent.signal == 0:
+
+            if agent.state in [-4, 4]:
+                agent.signal = -1
+
             # move the diagonal tower to a new direction
-            if free_directions[indexLeftDown] and is_agent_fixed(agent, indexRightDown) and (
+            elif free_directions[indexLeftDown] and is_agent_fixed(agent, indexRightDown) and (
                     is_agent_fixed(agent, indexLeft) or (free_directions[indexLeft] and agent.weight == 1)):
                 log_agent_read(agent)
                 return directions[indexLeftDown]
@@ -364,22 +332,21 @@ def directed_tentacle(agent):
                     agent.state += 1
 
             # tentacle has found a new island
-            elif -6 <= agent.state <= 6 and (agent.item_in(leftDown) or update_foot(agent)):
+            elif -6 <= agent.state <= 6 and ((agent.item_in(leftDown) and not agent.agent_in(left)) or update_foot(agent)):
                 if agent.item_in(leftDown) and not agent.agent_in(left):
                     agent.foot = 1
-                agent.write_memory_with("foot", agent.foot)
                 log_agent_read(agent)
                 log_memory_write(agent)
                 agent.signal = 1
                 if agent.agent_in(leftUp):
                     agent.adjust = agent.get_agent_in(leftUp).adjust + 1
-                if agent.agent_in(leftDown):
+                elif agent.agent_in(leftDown):
                     agent.adjust = -1
-                if agent.agent_in(left):
+                elif agent.agent_in(left):
                     agent.adjust = agent.get_agent_in(left).adjust
 
             # tentacle move return to the start of old island
-            elif (is_on_top(agent) and agent.item_in(directions[indexLeftDown]) and not agent.item_in(leftDown)) or (
+            elif (is_on_top(agent) and agent.item_in(directions[indexLeftDown]) and not agent.item_in(leftDown) and not agent.item_in(rightDown)) or (
                     is_agent_signal(agent, indexLeft, -1) or
                     is_agent_signal(agent, indexLeftUp, -1) or
                     is_agent_signal(agent, indexLeftDown, -1)):
@@ -417,6 +384,8 @@ def directed_tentacle(agent):
 
     return dirStand
 
+##################################################
+
 def alignment(agent):
 
     free_spaces = sum([
@@ -443,6 +412,8 @@ def alignment(agent):
         rightDown = dirSW
         leftDown = dirSE
 
+##################################################
+
     if agent.adjust > 0 and not (agent.agent_in(rightDown) or agent.agent_in(leftDown)):
         agent.adjust -= 1
         return rightUp
@@ -460,21 +431,7 @@ def alignment(agent):
 
     return dirStand
 
-def is_on_top(agent):
-    log_memory_read(agent)
-    if agent.ground == falling:
-        return False
-    for direction in directions:
-        if agent.agent_in(direction) and agent.ground < agent.get_agent_in(direction).ground:
-            return False
-    return True
-
-def is_agent_fixed(agent, direction):
-    return agent.agent_in(directions[direction]) and log_agent_read(
-        agent.get_agent_in(directions[direction])) and agent.get_agent_in(directions[direction]).fixed
-
-def is_agent_signal(agent, direction, signal):
-    return is_agent_fixed(agent, direction) and agent.get_agent_in(directions[direction]).signal == signal
+##################################################
 
 def release_signal(agent):
     rightDown = dirSE
@@ -538,7 +495,6 @@ def release_signal(agent):
             (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).ready) or
             free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right)):
         agent.ready = True
-    agent.write_memory_with("ready", agent.ready)
 
     # Return True if:
     # - Exactly one signal_1 and one signal_0, OR
@@ -551,6 +507,7 @@ def release_signal(agent):
             (agent.foot in [0, 2] and agent.agent_in(right) and agent.get_agent_in(right).signal == 0 and agent.item_in(leftDown)) or
             free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right))
 
+##################################################
 
 def update_foot(agent):
     # Check left-side neighbors (NW, W, SW)
@@ -567,6 +524,47 @@ def update_foot(agent):
         agent.foot = 2
         return True
     return False
+
+##################################################
+
+def find_weight(agent):
+    weight = 0
+    for direction in directions:
+        if agent.agent_in(direction):
+            weight += 1
+    return weight
+
+
+def find_ground(agent):
+    if agent.item_in(dirSW) or agent.item_in(dirSE):
+        return 1
+
+    ground = agent.ground
+    chain = False
+
+    for direction in directions:
+        if agent.agent_in(direction) and agent.get_agent_in(direction).ground < ground:
+            ground = agent.get_agent_in(direction).ground + 1
+            chain = True
+    if not chain:
+        ground = falling
+    return ground
+
+def is_on_top(agent):
+    log_memory_read(agent)
+    if agent.ground == falling:
+        return False
+    for direction in directions:
+        if agent.agent_in(direction) and agent.ground < agent.get_agent_in(direction).ground:
+            return False
+    return True
+
+def is_agent_fixed(agent, direction):
+    return agent.agent_in(directions[direction]) and log_agent_read(
+        agent.get_agent_in(directions[direction])) and agent.get_agent_in(directions[direction]).fixed
+
+def is_agent_signal(agent, direction, signal):
+    return is_agent_fixed(agent, direction) and agent.get_agent_in(directions[direction]).signal == signal
 
 def log_agent_read(agent):
     agent.world.csv_round.update_metrics(agent_read=1)
