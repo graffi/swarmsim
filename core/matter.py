@@ -101,7 +101,7 @@ class Matter:
         :param color: matter color
         :return: None
         """
-        print("Self", self, "changing color to", color)
+        #print("Self", self, "changing color to", color)
         if len(color) != 4:
             raise VisualizationError(
                 "Invalid color format!\ncolor has to be in rgba format => (float, float, float, float)", Level.WARNING)

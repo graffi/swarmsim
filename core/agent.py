@@ -34,6 +34,9 @@ class Agent(matter.Matter):
         self.ground = 999
         self.state = 0
         self.timer = 0
+        self.adjust = 0
+        self.foot = -1
+        self.ready = False
 
     def carries_item(self):
         if self.carried_item is None:
