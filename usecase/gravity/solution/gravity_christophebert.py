@@ -24,6 +24,9 @@ def solution(world):
 
     if world.get_actual_round() % 1 == 0:
         for agent in world.get_agent_list():
+            print(world.get_actual_round())
+            if all(value <= (-102, 0, 0) for value in world.get_agent_map_coordinates()):
+                world.set_successful_end()
 
             freeW = not agent.agent_in(dirW) and not agent.item_in(dirW)
             freeE = not agent.agent_in(dirE) and not agent.item_in(dirE)
@@ -34,7 +37,7 @@ def solution(world):
             nextdirection = dirNotSetYet
 
             if not hasattr(agent, 'planned_direction'):
-                agent.planned_direction = random.choice([dirW, dirE])
+                agent.planned_direction = random.choice([dirE])
 
             # initializing agent memory to prevent exceptions from checking none existent values
             if world.get_actual_round() == 1:
@@ -72,6 +75,8 @@ def solution(world):
             else:
                 agent.write_memory_with("timer", 0)
 
+                
+
             fixed_diagonal(agent)
             if agent.read_memory_with("fixed"):
                 if agent.read_memory_with("adjust") != 0:
@@ -108,12 +113,10 @@ def solution(world):
 
                     if nextdirection == dirNotSetYet and agent.item_in(dirSE) and agent.item_in(dirSW):
                         # Move left or right
-                        randdirection = planned_direction
                         nextdirection = dirStand
-
-                        if randdirection == dirW and freeW and not agent.agent_in(dirNE):
+                        if planned_direction == dirW and freeW and not agent.agent_in(dirNE):
                             nextdirection = planned_direction
-                        if randdirection == dirE and freeE and not agent.agent_in(dirNW):
+                        if planned_direction == dirE and freeE and not agent.agent_in(dirNW):
                             nextdirection = planned_direction
 
                     if nextdirection == dirNotSetYet and freeSE and agent.item_in(dirSW) and not agent.agent_in(dirNE) and freeW:
@@ -175,6 +178,7 @@ def solution(world):
                     nextdirection = dirStand
 
             # FINAL MOVE: if the agent is not falling currently, walk in the selected direction
+
             if nextdirection != dirNotSetYet:
                 agent.move_to(nextdirection)
 

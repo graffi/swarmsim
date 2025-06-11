@@ -35,6 +35,11 @@ def solution(world):
         #     HashMap<int,String> walkDirectionList = new HashMap<String,String>();
 
         for agent in world.get_agent_list():
+            print(world.get_actual_round())
+            if all(value <= (-100, 0, 0) for value in world.get_agent_map_coordinates()):
+                world.set_successful_end()
+            if world.get_actual_round() == 1000:
+                world.set_unsuccessful_end()
 
             # print(world.get_actual_round(), " Agent No.", agent.number, "  Coordinates", agent.coordinates, " Height", agent.coordinates[1], "  Number of Agents", world.get_amount_of_agents())
 
