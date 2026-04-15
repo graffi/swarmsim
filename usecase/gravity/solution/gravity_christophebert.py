@@ -65,10 +65,12 @@ def solution(world):
                 agent.write_memory_with("west_edge", True)
 
             if agent.read_memory_with("ground") >= falling:
-                if agent.read_memory_with("timer") >= 60:
+                timer = agent.read_memory_with("timer")
+                if timer is not None and int(timer) >= 60:
                     agent.write_memory_with("fixed", False)
                     agent.write_memory_with("timer", 0)
-                agent.write_memory_with("timer", agent.read_memory_with("timer") + 1)
+                timer = agent.read_memory_with("timer")
+                agent.write_memory_with("timer", (timer or 0) + 1)
             else:
                 agent.write_memory_with("timer", 0)
 

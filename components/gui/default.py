@@ -79,7 +79,7 @@ def create_slider(tick_interval: int, tick_position: int, max_position: int, min
     slider.setTickPosition(tick_position)
     slider.setMaximum(max_position)
     slider.setMinimum(min_position)
-    slider.setSliderPosition(slider_position)
+    slider.setSliderPosition(int(slider_position))
     # noinspection PyUnresolvedReferences
     slider.valueChanged.connect(callback)
     return slider

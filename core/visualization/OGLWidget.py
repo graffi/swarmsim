@@ -321,7 +321,12 @@ class OGLWidget(QtOpenGL.QGLWidget):
         # starting dragging
         if self.ctrl and self._enable_cursor:
             if int(a0.buttons()) & QtCore.Qt.LeftButton:
+
+                self.camera.update_mouse_position([a0.x()*2, a0.y()*2])
                 nl = self.world.grid.get_nearest_valid_coordinates(self.camera.cursor_position)
+                # nl = self.world.grid.get_nearest_valid_coordinates(self.camera.cursor_position)
+
+
                 if self.cursor_type == MatterType.ITEM:
                     if nl in self.world.item_map_coordinates:
                         self.world.remove_item_on(nl)
