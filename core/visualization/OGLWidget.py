@@ -322,9 +322,8 @@ class OGLWidget(QtOpenGL.QGLWidget):
         if self.ctrl and self._enable_cursor:
             if int(a0.buttons()) & QtCore.Qt.LeftButton:
 
-                self.camera.update_mouse_position([a0.x()*2, a0.y()*2])
+                self.camera.update_mouse_position([a0.x(), a0.y()])
                 nl = self.world.grid.get_nearest_valid_coordinates(self.camera.cursor_position)
-                # nl = self.world.grid.get_nearest_valid_coordinates(self.camera.cursor_position)
 
 
                 if self.cursor_type == MatterType.ITEM:
