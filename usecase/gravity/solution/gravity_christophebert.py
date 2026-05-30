@@ -20,6 +20,12 @@ color_on_top = (0.0, 0.5, 0.5, 1.0)
 falling = 999
 
 
+def safe_read_memory(agent, key, default=0):
+    """Helper function to safely read memory with a default value"""
+    value = agent.read_memory_with(key)
+    return value if value is not None else default
+
+
 def solution(world):
 
     if world.get_actual_round() % 1 == 0:
@@ -75,6 +81,8 @@ def solution(world):
                 agent.write_memory_with("fixed", False)
                 agent.write_memory_with("signal", 0)
                 agent.write_memory_with("state", 0)
+                agent.write_memory_with("east_edge", False)
+                agent.write_memory_with("west_edge", False)
 
             planned_direction = agent.planned_direction
             agent.weight = find_weight(agent)
@@ -85,14 +93,15 @@ def solution(world):
                 agent.write_memory_with("ground", find_ground(agent))
 
             # writing and passing
-            if (freeSE and agent.item_in(dirSW)) or agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("east_edge") or agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("east_edge"):
+            if (freeSE and agent.item_in(dirSW)) or (agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "east_edge", False)) or (agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "east_edge", False)):
                 # agent has reached East Edge
                 agent.write_memory_with("east_edge", True)
-            if (freeSW and agent.item_in(dirSE)) or agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("west_edge") or agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("west_edge"):
+            if (freeSW and agent.item_in(dirSE)) or (agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "west_edge", False)) or (agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "west_edge", False)):
                 # agent has reached West Edge
                 agent.write_memory_with("west_edge", True)
 
-            if agent.read_memory_with("ground") >= falling:
+            ground_val = safe_read_memory(agent, "ground", falling)
+            if ground_val >= falling:
                 timer = agent.read_memory_with("timer")
                 if timer is not None and int(timer) >= 60:
                     agent.write_memory_with("fixed", False)
@@ -104,7 +113,7 @@ def solution(world):
 
             fixed_diagonal(agent)
             if agent.read_memory_with("fixed"):
-                if agent.read_memory_with("adjust") != 0:
+                if safe_read_memory(agent, "adjust", 0) != 0:
                     nextdirection = alignment(agent)
                 else:
                     nextdirection = directed_tentacle(agent)
@@ -113,9 +122,10 @@ def solution(world):
             agent.set_color(color_default)
             if agent.read_memory_with("fixed"):
                 agent.set_color(color_fixed)
-            if agent.read_memory_with("signal") == 1:
+            signal_val = safe_read_memory(agent, "signal", 0)
+            if signal_val == 1:
                 agent.set_color(color_signal_1)
-            if agent.read_memory_with("signal") == -1:
+            if signal_val == -1:
                 agent.set_color(color_signal_neg_1)
             if is_on_top(agent):
                 agent.set_color(color_on_top)
@@ -228,7 +238,10 @@ def fixed_diagonal(agent):
 ##################################################
 
     if agent.read_memory_with("fixed"):
-        if abs(agent.read_memory_with("state")) >= 9 and ((agent.agent_in(leftDown) and agent.get_agent_in(leftDown).read_memory_with("fixed")) or (agent.item_in(leftDown) and (agent.agent_in(rightUp) and not agent.get_agent_in(rightUp).read_memory_with("fixed")))) and ((agent.weight == 1 and abs(agent.read_memory_with("state") + agent.read_memory_with("adjust")) >= 11) or (agent.agent_in(rightUp) and not agent.get_agent_in(rightUp).read_memory_with("fixed"))):
+        state_val = safe_read_memory(agent, "state", 0)
+        adjust_val = safe_read_memory(agent, "adjust", 0)
+        neighbor_state = safe_read_memory(agent.get_agent_in(rightDown), "state", 0) if agent.agent_in(rightDown) else 0
+        if abs(state_val) >= 9 and ((agent.agent_in(leftDown) and agent.get_agent_in(leftDown).read_memory_with("fixed")) or (agent.item_in(leftDown) and (agent.agent_in(rightUp) and not agent.get_agent_in(rightUp).read_memory_with("fixed")))) and ((agent.weight == 1 and abs(state_val + adjust_val) >= 11) or (agent.agent_in(rightUp) and not agent.get_agent_in(rightUp).read_memory_with("fixed"))):
             agent.write_memory_with("fixed", False)
             agent.write_memory_with("ready", False)
             agent.write_memory_with("state", 0)
@@ -236,8 +249,8 @@ def fixed_diagonal(agent):
             agent.write_memory_with("adjust", 0)
             log_agent_read(agent)
             log_memory_write(agent)
-    elif agent.read_memory_with("east_edge") and agent.read_memory_with("west_edge") and freeLeftDown and (agent.item_in(rightDown)
-         or (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).read_memory_with("fixed")) and agent.get_agent_in(rightDown).read_memory_with("state") == 0):
+    elif safe_read_memory(agent, "east_edge", False) and safe_read_memory(agent, "west_edge", False) and freeLeftDown and (agent.item_in(rightDown)
+         or (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).read_memory_with("fixed")) and safe_read_memory(agent.get_agent_in(rightDown), "state", 0) == 0):
         agent.write_memory_with("fixed", True)
         log_memory_write(agent)
 
@@ -252,12 +265,13 @@ def directed_tentacle(agent):
     freeSE = not agent.agent_in(dirSE) and not agent.item_in(dirSE)
     free_directions = [freeNE, freeE, freeSE, freeSW, freeW, freeNW]
 
-    indexRightUp = (0 + agent.read_memory_with("state")) % 6
-    indexRight = (1 + agent.read_memory_with("state")) % 6
-    indexRightDown = (2 + agent.read_memory_with("state")) % 6
-    indexLeftDown = (3 + agent.read_memory_with("state")) % 6
-    indexLeft = (4 + agent.read_memory_with("state")) % 6
-    indexLeftUp = (5 + agent.read_memory_with("state")) % 6
+    state_val = safe_read_memory(agent, "state", 0)
+    indexRightUp = (0 + state_val) % 6
+    indexRight = (1 + state_val) % 6
+    indexRightDown = (2 + state_val) % 6
+    indexLeftDown = (3 + state_val) % 6
+    indexLeft = (4 + state_val) % 6
+    indexLeftUp = (5 + state_val) % 6
 
     left = dirW
     leftUp = dirNW
@@ -286,9 +300,10 @@ def directed_tentacle(agent):
 
     if agent.weight == 1 or 2:
         # normal mode to search islands
-        if agent.read_memory_with("signal") == 0:
+        signal_val = safe_read_memory(agent, "signal", 0)
+        if signal_val == 0:
 
-            if agent.read_memory_with("state") in [-4, 4]:
+            if state_val in [-4, 4]:
                 agent.write_memory_with("signal", -1)
 
             # move the diagonal tower to a new direction
@@ -300,27 +315,27 @@ def directed_tentacle(agent):
             # rotate the direction of the current agent
             elif is_agent_fixed(agent, indexRight) and (
                     (free_directions[indexLeftDown] and agent.get_agent_in(directions[indexRight]).weight == 1) or
-                    abs(agent.read_memory_with("state") - agent.get_agent_in(directions[indexRight]).read_memory_with("state")) <= 2):
+                    abs(state_val - safe_read_memory(agent.get_agent_in(directions[indexRight]), "state", 0)) <= 2):
                 log_memory_write(agent)
 
                 if agent.planned_direction == dirW:
-                    agent.write_memory_with("state", agent.read_memory_with("state") - 1)
+                    agent.write_memory_with("state", state_val - 1)
                 else:
-                    agent.write_memory_with("state", agent.read_memory_with("state") + 1)
+                    agent.write_memory_with("state", state_val + 1)
 
             # tentacle has found a new island
-            elif -6 <= agent.read_memory_with("state") <= 6 and ((agent.item_in(leftDown) and not agent.agent_in(left)) or update_foot(agent)):
+            elif -6 <= state_val <= 6 and ((agent.item_in(leftDown) and not agent.agent_in(left)) or update_foot(agent)):
                 if agent.item_in(leftDown) and not agent.agent_in(left):
                     agent.write_memory_with("foot", 1)
                 log_agent_read(agent)
                 log_memory_write(agent)
                 agent.write_memory_with("signal", 1)
                 if agent.agent_in(leftUp):
-                    agent.write_memory_with("adjust", agent.get_agent_in(leftUp).read_memory_with("adjust") + 1)
+                    agent.write_memory_with("adjust", safe_read_memory(agent.get_agent_in(leftUp), "adjust", 0) + 1)
                 elif agent.agent_in(leftDown):
                     agent.write_memory_with("adjust", -1)
                 elif agent.agent_in(left):
-                    agent.write_memory_with("adjust", agent.get_agent_in(left).read_memory_with("adjust"))
+                    agent.write_memory_with("adjust", safe_read_memory(agent.get_agent_in(left), "adjust", 0))
 
             # tentacle move return to the start of old island
             elif (is_on_top(agent) and agent.item_in(directions[indexLeftDown]) and
@@ -333,19 +348,19 @@ def directed_tentacle(agent):
                 agent.write_memory_with("signal", -1)
 
         # leave old island and stand up
-        elif agent.read_memory_with("signal") == 1:
+        elif signal_val == 1:
             update_foot(agent)
             if release_signal(agent):
                 log_memory_write(agent)
                 agent.write_memory_with("signal", 0)
                 agent.write_memory_with("foot", -1)
                 if agent.planned_direction == dirW:
-                    agent.write_memory_with("state", agent.read_memory_with("state") - 9)
+                    agent.write_memory_with("state", state_val - 9)
                 else:
-                    agent.write_memory_with("state", agent.read_memory_with("state") + 9)
+                    agent.write_memory_with("state", state_val + 9)
 
         # return to old island
-        elif agent.read_memory_with("signal") == -1:
+        elif signal_val == -1:
             if (agent.item_in(directions[indexRightDown]) or (
                     is_agent_signal(agent, indexRight, 0) or
                     is_agent_signal(agent, indexRightUp, 0) or
@@ -355,10 +370,10 @@ def directed_tentacle(agent):
                 agent.write_memory_with("signal", 0)
                 if agent.planned_direction == dirW:
                     agent.planned_direction = dirE
-                    agent.write_memory_with("state", agent.read_memory_with("state") + 10)
+                    agent.write_memory_with("state", state_val + 10)
                 else:
                     agent.planned_direction = dirW
-                    agent.write_memory_with("state", agent.read_memory_with("state") - 10)
+                    agent.write_memory_with("state", state_val - 10)
 
     return dirStand
 
@@ -392,19 +407,22 @@ def alignment(agent):
 
 ##################################################
 
-    if agent.read_memory_with("adjust") > 0 and not (agent.agent_in(rightDown) or agent.agent_in(leftDown)):
-        agent.write_memory_with("adjust", agent.read_memory_with("adjust") - 1 )
+    adjust_val = safe_read_memory(agent, "adjust", 0)
+    if adjust_val > 0 and not (agent.agent_in(rightDown) or agent.agent_in(leftDown)):
+        agent.write_memory_with("adjust", adjust_val - 1)
         return rightUp
 
     # relocate adjust value on to the agent state
-    if ((agent.item_in(leftDown) and not agent.agent_in(left)) or (agent.agent_in(leftDown) and agent.get_agent_in(leftDown).read_memory_with("adjust") == 0)) and (agent.agent_in(rightUp) or free_spaces == 5):
+    neighbor_adjust = safe_read_memory(agent.get_agent_in(leftDown), "adjust", 0) if agent.agent_in(leftDown) else 1
+    if ((agent.item_in(leftDown) and not agent.agent_in(left)) or (agent.agent_in(leftDown) and neighbor_adjust == 0)) and (agent.agent_in(rightUp) or free_spaces == 5):
+        state_val = safe_read_memory(agent, "state", 0)
         if agent.planned_direction == dirE:
-            agent.write_memory_with("state", agent.read_memory_with("state") - agent.read_memory_with("adjust"))
+            agent.write_memory_with("state", state_val - adjust_val)
         else:
-            agent.write_memory_with("state", agent.read_memory_with("state") + agent.read_memory_with("adjust"))
+            agent.write_memory_with("state", state_val + adjust_val)
         agent.write_memory_with("adjust", 0)
 
-    if agent.read_memory_with("adjust") < 0 and agent.agent_in(left) and not agent.agent_in(rightDown) and not agent.agent_in(right) and (agent.agent_in(rightUp) or agent.item_in(rightDown) or free_spaces == 5):
+    if adjust_val < 0 and agent.agent_in(left) and not agent.agent_in(rightDown) and not agent.agent_in(right) and (agent.agent_in(rightUp) or agent.item_in(rightDown) or free_spaces == 5):
         return leftUp
 
     return dirStand
@@ -425,23 +443,23 @@ def release_signal(agent):
 
     # Conditions for detecting signal 1 and item presence in leftDown
     signal_1_conditions = [
-        agent.agent_in(dirNW) and agent.get_agent_in(dirNW).read_memory_with("signal") == 1,
-        agent.agent_in(dirW) and agent.get_agent_in(dirW).read_memory_with("signal") == 1,
-        agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("signal") == 1,
-        agent.agent_in(dirE) and agent.get_agent_in(dirE).read_memory_with("signal") == 1,
-        agent.agent_in(dirNE) and agent.get_agent_in(dirNE).read_memory_with("signal") == 1,
-        agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("signal") == 1,
+        agent.agent_in(dirNW) and safe_read_memory(agent.get_agent_in(dirNW), "signal", 0) == 1,
+        agent.agent_in(dirW) and safe_read_memory(agent.get_agent_in(dirW), "signal", 0) == 1,
+        agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "signal", 0) == 1,
+        agent.agent_in(dirE) and safe_read_memory(agent.get_agent_in(dirE), "signal", 0) == 1,
+        agent.agent_in(dirNE) and safe_read_memory(agent.get_agent_in(dirNE), "signal", 0) == 1,
+        agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "signal", 0) == 1,
         agent.item_in(leftDown)
     ]
 
     # Conditions for detecting signal 0 and item presence in rightDown
     signal_0_conditions = [
-        agent.agent_in(dirNW) and agent.get_agent_in(dirNW).read_memory_with("signal") == 0,
-        agent.agent_in(dirW) and agent.get_agent_in(dirW).read_memory_with("signal") == 0,
-        agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("signal") == 0,
-        agent.agent_in(dirE) and agent.get_agent_in(dirE).read_memory_with("signal") == 0,
-        agent.agent_in(dirNE) and agent.get_agent_in(dirNE).read_memory_with("signal") == 0,
-        agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("signal") == 0,
+        agent.agent_in(dirNW) and safe_read_memory(agent.get_agent_in(dirNW), "signal", 0) == 0,
+        agent.agent_in(dirW) and safe_read_memory(agent.get_agent_in(dirW), "signal", 0) == 0,
+        agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "signal", 0) == 0,
+        agent.agent_in(dirE) and safe_read_memory(agent.get_agent_in(dirE), "signal", 0) == 0,
+        agent.agent_in(dirNE) and safe_read_memory(agent.get_agent_in(dirNE), "signal", 0) == 0,
+        agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "signal", 0) == 0,
     ]
 
     # Count how many conditions are met
@@ -458,19 +476,19 @@ def release_signal(agent):
         not agent.agent_in(dirSE) and not agent.item_in(dirSE)
     ])
 
-    if ((agent.agent_in(dirW) and agent.get_agent_in(dirW).read_memory_with("adjust") < 0) or
-            (agent.agent_in(dirNW) and agent.get_agent_in(dirNW).read_memory_with("adjust") < 0) or
-            (agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("adjust") < 0) or
-            (agent.agent_in(dirE) and agent.get_agent_in(dirE).read_memory_with("adjust") < 0) or
-            (agent.agent_in(dirNE) and agent.get_agent_in(dirNE).read_memory_with("adjust") < 0) or
-            (agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("adjust") < 0)):
+    if ((agent.agent_in(dirW) and safe_read_memory(agent.get_agent_in(dirW), "adjust", 0) < 0) or
+            (agent.agent_in(dirNW) and safe_read_memory(agent.get_agent_in(dirNW), "adjust", 0) < 0) or
+            (agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "adjust", 0) < 0) or
+            (agent.agent_in(dirE) and safe_read_memory(agent.get_agent_in(dirE), "adjust", 0) < 0) or
+            (agent.agent_in(dirNE) and safe_read_memory(agent.get_agent_in(dirNE), "adjust", 0) < 0) or
+            (agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "adjust", 0) < 0)):
         agent.write_memory_with("adjust", -1)
 
     if ((count_signal_0 == 1 and agent.item_in(rightDown)) or
             (count_signal_1 == 1 and free_spaces >= 5) or
-            (agent.agent_in(right) and agent.get_agent_in(right).read_memory_with("ready")) or
-            (agent.agent_in(rightUp) and agent.get_agent_in(rightUp).read_memory_with("ready")) or
-            (agent.agent_in(rightDown) and agent.get_agent_in(rightDown).read_memory_with("ready")) or
+            (agent.agent_in(right) and safe_read_memory(agent.get_agent_in(right), "ready", False)) or
+            (agent.agent_in(rightUp) and safe_read_memory(agent.get_agent_in(rightUp), "ready", False)) or
+            (agent.agent_in(rightDown) and safe_read_memory(agent.get_agent_in(rightDown), "ready", False)) or
              free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right)):
         agent.write_memory_with("ready", True)
 
@@ -478,27 +496,27 @@ def release_signal(agent):
     # - Exactly one signal_1 and one signal_0, OR
     # - Exactly one signal_1 and at least 5 free spaces, AND
     # - The right-side neighbor condition is met
-    if not agent.read_memory_with("ready"):
+    if not safe_read_memory(agent, "ready", False):
         return False
 
     return (((count_signal_1 == 1 and count_signal_0 == 1) or (count_signal_1 == 1 and free_spaces == 5)) or
-            (agent.read_memory_with("foot") in [0, 2] and agent.agent_in(right) and agent.get_agent_in(right).read_memory_with("signal") == 0 and agent.item_in(leftDown)) or
+            (safe_read_memory(agent, "foot", -1) in [0, 2] and agent.agent_in(right) and safe_read_memory(agent.get_agent_in(right), "signal", 0) == 0 and agent.item_in(leftDown)) or
             free_spaces == 4 and agent.item_in(rightDown) and not agent.agent_in(right))
 
 ##################################################
 
 def update_foot(agent):
     # Check left-side neighbors (NW, W, SW)
-    if ((agent.agent_in(dirNW) and agent.get_agent_in(dirNW).read_memory_with("foot") in [0, 1]) or
-            (agent.agent_in(dirW) and agent.get_agent_in(dirW).read_memory_with("foot") in [0, 1]) or
-            (agent.agent_in(dirSW) and agent.get_agent_in(dirSW).read_memory_with("foot") in [0, 1])):
+    if ((agent.agent_in(dirNW) and safe_read_memory(agent.get_agent_in(dirNW), "foot", -1) in [0, 1]) or
+            (agent.agent_in(dirW) and safe_read_memory(agent.get_agent_in(dirW), "foot", -1) in [0, 1]) or
+            (agent.agent_in(dirSW) and safe_read_memory(agent.get_agent_in(dirSW), "foot", -1) in [0, 1])):
         agent.write_memory_with("foot", 0)
         return True
 
     # Check right-side neighbors (NE, E, SE)
-    if ((agent.agent_in(dirNE) and agent.get_agent_in(dirNE).read_memory_with("foot") in [1, 2]) or
-          (agent.agent_in(dirE) and agent.get_agent_in(dirE).read_memory_with("foot") in [1, 2]) or
-          (agent.agent_in(dirSE) and agent.get_agent_in(dirSE).read_memory_with("foot") in [1, 2])):
+    if ((agent.agent_in(dirNE) and safe_read_memory(agent.get_agent_in(dirNE), "foot", -1) in [1, 2]) or
+          (agent.agent_in(dirE) and safe_read_memory(agent.get_agent_in(dirE), "foot", -1) in [1, 2]) or
+          (agent.agent_in(dirSE) and safe_read_memory(agent.get_agent_in(dirSE), "foot", -1) in [1, 2])):
         agent.write_memory_with("foot", 2)
         return True
     return False
@@ -518,12 +536,16 @@ def find_ground(agent):
         return 1
 
     ground = agent.read_memory_with("ground")
+    if ground is None:
+        ground = falling
     chain = False
 
     for direction in directions:
-        if agent.agent_in(direction) and agent.get_agent_in(direction).read_memory_with("ground") < ground:
-            ground = agent.get_agent_in(direction).read_memory_with("ground") + 1
-            chain = True
+        if agent.agent_in(direction):
+            neighbor_ground = agent.get_agent_in(direction).read_memory_with("ground")
+            if neighbor_ground is not None and neighbor_ground < ground:
+                ground = neighbor_ground + 1
+                chain = True
     if not chain:
         ground = falling
     return ground
@@ -533,16 +555,18 @@ def is_on_top(agent):
     if agent.read_memory_with("ground") == falling:
         return False
     for direction in directions:
-        if agent.agent_in(direction) and agent.read_memory_with("ground") < agent.get_agent_in(direction).read_memory_with("ground"):
-            return False
+        if agent.agent_in(direction):
+            neighbor_ground = agent.get_agent_in(direction).read_memory_with("ground")
+            if neighbor_ground is not None and agent.read_memory_with("ground") < neighbor_ground:
+                return False
     return True
 
 def is_agent_fixed(agent, direction):
     return agent.agent_in(directions[direction]) and log_agent_read(
-        agent.get_agent_in(directions[direction])) and agent.get_agent_in(directions[direction]).read_memory_with("fixed")
+        agent.get_agent_in(directions[direction])) and safe_read_memory(agent.get_agent_in(directions[direction]), "fixed", False)
 
 def is_agent_signal(agent, direction, signal):
-    return is_agent_fixed(agent, direction) and agent.get_agent_in(directions[direction]).read_memory_with("signal") == signal
+    return is_agent_fixed(agent, direction) and safe_read_memory(agent.get_agent_in(directions[direction]), "signal", 0) == signal
 
 def log_agent_read(agent):
     agent.world.csv_round.update_metrics(agent_read=1)
