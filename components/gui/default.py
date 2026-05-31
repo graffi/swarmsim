@@ -7,6 +7,8 @@ from core.matter import MatterType
 from core.vis3d import Visualization
 from core.visualization.utils import show_msg, Level
 from core.world import World
+from components.gui.config_selector import ConfigSelectorDialog
+from components import config_util
 
 # global variables for all te functions..
 world: World
@@ -187,6 +189,25 @@ def sim_tab():
 
     reset_button.clicked.connect(reset_sim)
 
+    # config button
+    config_button = QPushButton("change configuration")
+
+    def open_config_selector():
+        current_config = config_util.load_current_config()
+        dialog = ConfigSelectorDialog(current_config, vis.get_main_window())
+        if dialog.exec():
+            preset = dialog.get_selected_preset()
+            if preset:
+                config_util.save_config_preset(preset)
+                reset_sim()
+                show_msg(
+                    f"Configuration changed to: {preset['name']}\nSimulation will restart.",
+                    Level.INFO,
+                    vis.get_main_window()
+                )
+
+    config_button.clicked.connect(open_config_selector)
+
     quick_scenario_button = QPushButton("quick")
     save_as_scenario_button = QPushButton("save as")
 
@@ -210,6 +231,7 @@ def sim_tab():
     vbox.addWidget(start_stop_button)
     vbox.addLayout(get_rps_slider())
     vbox.addWidget(reset_button)
+    vbox.addWidget(config_button)
     sim_box.setLayout(vbox)
     layout.addWidget(sim_box)
     layout.addWidget(screenshot_box)
