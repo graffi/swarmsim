@@ -37,7 +37,35 @@ def solution(world):
                 agent.planned_direction = random.choice([dirW, dirE])
 
             # initializing agent memory to prevent exceptions from checking none existent values
-            if world.get_actual_round() == 1:
+
+            if agent.read_memory_with("agent_number") is None:
+                agent.write_memory_with("agent_number", agent.number)
+
+            if agent.read_memory_with("adjust") is None:
+                agent.write_memory_with("adjust", 0)
+
+            if agent.read_memory_with("foot") is None:
+                agent.write_memory_with("foot", -1)
+
+            if agent.read_memory_with("ready") is None:
+                agent.write_memory_with("ready", False)
+
+            if agent.read_memory_with("timer") is None:
+                agent.write_memory_with("timer", 0)
+
+            if agent.read_memory_with("ground") is None:
+                agent.write_memory_with("ground", 999)
+
+            if agent.read_memory_with("fixed") is None:
+                agent.write_memory_with("fixed", False)
+
+            if agent.read_memory_with("signal") is None:
+                agent.write_memory_with("signal", 0)
+
+            if agent.read_memory_with("state") is None:
+                agent.write_memory_with("state", 0)
+
+            if world.get_actual_round() == 1 :
                 agent.write_memory_with("agent_number", agent.number)
                 agent.write_memory_with("adjust", 0)
                 agent.write_memory_with("foot", -1)
