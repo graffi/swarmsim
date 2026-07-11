@@ -65,6 +65,20 @@ def main_loop(config_data, swarm_sim_world):
 
 
 def do_reset(swarm_sim_world):
+    # Reload configuration from config.ini (may have been changed via UI)
+    updated_config = config.ConfigData()
+    
+    # Update the world's config_data with new values
+    if updated_config.sim_type != swarm_sim_world.config_data.sim_type or \
+       updated_config.scenario != swarm_sim_world.config_data.scenario or \
+       updated_config.solution != swarm_sim_world.config_data.solution:
+        # Configuration changed - update config_data
+        swarm_sim_world.config_data.sim_type = updated_config.sim_type
+        swarm_sim_world.config_data.scenario = updated_config.scenario
+        swarm_sim_world.config_data.solution = updated_config.solution
+        # Reseed the random number generator for different simulation
+        random.seed(updated_config.seed_value)
+    
     swarm_sim_world.reset()
     solution = get_solution(swarm_sim_world.config_data)
     scenario = get_scenario(swarm_sim_world.config_data)
